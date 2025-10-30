@@ -193,6 +193,10 @@ public class EconomyManager implements EconomyService, Listener {
             }
         }
 
-        team.setPrefix(ChatColor.GREEN + decimalFormat.format(getBalance(playerId)));
+        double balance = balances.computeIfAbsent(
+                playerId,
+                id -> plugin.getConfig().getDouble("economy.starting-balance", 0)
+        );
+        team.setPrefix(ChatColor.GREEN + decimalFormat.format(balance));
     }
 }
