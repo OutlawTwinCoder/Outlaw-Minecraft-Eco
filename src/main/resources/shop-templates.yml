@@ -1,82 +1,106 @@
 templates:
   tools:
     display-name: '&eBoutique Outils'
-    items:
-      - item: IRON_PICKAXE
-        amount: 1
-        buy-price: 75
-        sell-price: 45
-      - item: IRON_AXE
-        amount: 1
-        buy-price: 70
-        sell-price: 42
-      - item: IRON_SHOVEL
-        amount: 1
-        buy-price: 45
-        sell-price: 27
-      - item: DIAMOND_PICKAXE
-        amount: 1
-        buy-price: 450
-        sell-price: 270
-      - item: SHIELD
-        amount: 1
-        buy-price: 90
-        sell-price: 54
-      - item: CROSSBOW
-        amount: 1
-        buy-price: 125
-        sell-price: 75
+    tabs:
+      minage:
+        display-name: '&6Outils de minage'
+        icon: IRON_PICKAXE
+        items:
+          - item: IRON_PICKAXE
+            amount: 1
+            buy-price: 75
+            sell-price: 45
+          - item: IRON_AXE
+            amount: 1
+            buy-price: 70
+            sell-price: 42
+          - item: IRON_SHOVEL
+            amount: 1
+            buy-price: 45
+            sell-price: 27
+          - item: DIAMOND_PICKAXE
+            amount: 1
+            buy-price: 450
+            sell-price: 270
+      combat:
+        display-name: '&cProtection et distance'
+        icon: SHIELD
+        items:
+          - item: SHIELD
+            amount: 1
+            buy-price: 90
+            sell-price: 54
+          - item: CROSSBOW
+            amount: 1
+            buy-price: 125
+            sell-price: 75
   blocks:
     display-name: '&eBoutique Blocs'
-    items:
-      - item: WHITE_CONCRETE
-        amount: 16
-        buy-price: 40
-        sell-price: 24
-      - item: RED_CONCRETE
-        amount: 16
-        buy-price: 40
-        sell-price: 24
-      - item: BLUE_CONCRETE
-        amount: 16
-        buy-price: 40
-        sell-price: 24
-      - item: GLASS
-        amount: 32
-        buy-price: 30
-        sell-price: 18
-      - item: SEA_LANTERN
-        amount: 8
-        buy-price: 55
-        sell-price: 33
-      - item: BRICKS
-        amount: 32
-        buy-price: 45
-        sell-price: 27
+    tabs:
+      concrete:
+        display-name: '&bBéton coloré'
+        icon: WHITE_CONCRETE
+        items:
+          - item: WHITE_CONCRETE
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+          - item: RED_CONCRETE
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+          - item: BLUE_CONCRETE
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+      deco:
+        display-name: '&aDécoration'
+        icon: GLASS
+        items:
+          - item: GLASS
+            amount: 32
+            buy-price: 30
+            sell-price: 18
+          - item: SEA_LANTERN
+            amount: 8
+            buy-price: 55
+            sell-price: 33
+          - item: BRICKS
+            amount: 32
+            buy-price: 45
+            sell-price: 27
   food:
     display-name: '&eBoutique Nourriture'
-    items:
-      - item: COOKED_BEEF
-        amount: 16
-        buy-price: 32
-        sell-price: 20
-      - item: BREAD
-        amount: 16
-        buy-price: 18
-        sell-price: 11
-      - item: GOLDEN_CARROT
-        amount: 16
-        buy-price: 60
-        sell-price: 36
-      - item: CAKE
-        amount: 1
-        buy-price: 25
-        sell-price: 15
-      - item: MUSHROOM_STEW
-        amount: 4
-        buy-price: 20
-        sell-price: 12
-      - item: PUMPKIN_PIE
-        amount: 8
-        buy-price: 28
-        sell-price: 17
+    tabs:
+      repas:
+        display-name: '&dRepas rapides'
+        icon: COOKED_BEEF
+        items:
+          - item: COOKED_BEEF
+            amount: 16
+            buy-price: 32
+            sell-price: 20
+          - item: BREAD
+            amount: 16
+            buy-price: 18
+            sell-price: 11
+          - item: GOLDEN_CARROT
+            amount: 16
+            buy-price: 60
+            sell-price: 36
+          - item: MUSHROOM_STEW
+            amount: 4
+            buy-price: 20
+            sell-price: 12
+      douceurs:
+        display-name: '&5Douceurs'
+        icon: CAKE
+        items:
+          - item: CAKE
+            amount: 1
+            buy-price: 25
+            sell-price: 15
+          - item: PUMPKIN_PIE
+            amount: 8
+            buy-price: 28
+            sell-price: 17
