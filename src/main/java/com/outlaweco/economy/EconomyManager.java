@@ -12,7 +12,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.NumberFormat;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
@@ -163,7 +162,7 @@ public class EconomyManager implements EconomyService, Listener {
             Scoreboard scoreboard = manager.getNewScoreboard();
             Objective newObjective = scoreboard.registerNewObjective(SCOREBOARD_OBJECTIVE, "dummy", ChatColor.GOLD + "Argent");
             newObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
-            newObjective.setNumberFormat(NumberFormat.blank());
+            applyBlankNumberFormat(newObjective);
 
             Team balanceTeam = scoreboard.registerNewTeam(BALANCE_TEAM);
             balanceTeam.addEntry(BALANCE_ENTRY);
@@ -174,7 +173,7 @@ public class EconomyManager implements EconomyService, Listener {
         }
 
         objective.setDisplayName(ChatColor.GOLD + "Argent");
-        objective.setNumberFormat(NumberFormat.blank());
+        applyBlankNumberFormat(objective);
     }
 
     private void updateBalanceDisplay(UUID playerId) {
@@ -186,9 +185,7 @@ public class EconomyManager implements EconomyService, Listener {
         setupSidebar(player);
         Scoreboard scoreboard = player.getScoreboard();
         Objective objective = scoreboard.getObjective(SCOREBOARD_OBJECTIVE);
-        if (objective != null) {
-            objective.setNumberFormat(NumberFormat.blank());
-        }
+        applyBlankNumberFormat(objective);
 
         Team team = scoreboard.getTeam(BALANCE_TEAM);
         if (team == null) {
@@ -204,5 +201,20 @@ public class EconomyManager implements EconomyService, Listener {
                 id -> plugin.getConfig().getDouble("economy.starting-balance", 0)
         );
         team.setPrefix(ChatColor.GREEN + decimalFormat.format(balance) + "$");
+    }
+
+    private void applyBlankNumberFormat(Objective objective) {
+        if (objective == null) {
+            return;
+        }
+        try {
+            Class<?> numberFormatClass = Class.forName("org.bukkit.scoreboard.NumberFormat");
+            Object blankFormat = numberFormatClass.getMethod("blank").invoke(null);
+            objective.getClass().getMethod("setNumberFormat", numberFormatClass).invoke(objective, blankFormat);
+        } catch (ClassNotFoundException ignored) {
+            // API level does not support number formatting; ignore so we stay compatible with older servers.
+        } catch (ReflectiveOperationException e) {
+            plugin.getLogger().fine("Impossible d'appliquer le format de numéro vierge : " + e.getMessage());
+        }
     }
 }
