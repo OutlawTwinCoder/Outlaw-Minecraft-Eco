@@ -40,7 +40,9 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private static final String PERMISSION_USE = "outlaweco.use";
     private static final String PERMISSION_ADMIN = "outlawecoadmin";
     private static final int INVENTORY_SIZE = 54;
-    private static final int[] TAB_SLOTS = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+    private static final int CATEGORY_PREVIOUS_SLOT = 0;
+    private static final int CATEGORY_NEXT_SLOT = 8;
+    private static final int[] CATEGORY_DISPLAY_SLOTS = {1, 2, 3, 4, 5, 6, 7};
     private static final int[] OFFER_SLOTS;
     private static final int PREVIOUS_SLOT = 45;
     private static final int CLOSE_SLOT = 49;
@@ -539,22 +541,46 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     }
 
     private void openTemplate(Player player, ShopTemplate template) {
-        openTemplate(player, template, 0, 0);
+        openTemplate(player, template, 0, 0, -1);
     }
 
     private void openTemplate(Player player, ShopTemplate template, int categoryIndex) {
-        openTemplate(player, template, categoryIndex, 0);
+        openTemplate(player, template, categoryIndex, 0, -1);
     }
 
     private void openTemplate(Player player, ShopTemplate template, int categoryIndex, int page) {
+        openTemplate(player, template, categoryIndex, page, -1);
+    }
+
+    private void openTemplate(Player player, ShopTemplate template, int categoryIndex, int page, int categoryPageOverride) {
+        if (template == null) {
+            player.sendMessage("§cBoutique introuvable.");
+            return;
+        }
+
         List<ShopCategory> categories = template.getCategories();
         if (categories.isEmpty()) {
             player.sendMessage("§cAucune catégorie disponible pour cette boutique.");
             return;
         }
 
-        if (categoryIndex < 0 || categoryIndex >= categories.size()) {
+        if (categoryIndex < 0) {
             categoryIndex = 0;
+        } else if (categoryIndex >= categories.size()) {
+            categoryIndex = categories.size() - 1;
+        }
+
+        int categoriesPerPage = CATEGORY_DISPLAY_SLOTS.length;
+        int totalCategoryPages = Math.max(1, (int) Math.ceil(categories.size() / (double) categoriesPerPage));
+        int categoryPage = categoryIndex / categoriesPerPage;
+        if (categoryPageOverride >= 0) {
+            categoryPage = Math.max(0, Math.min(categoryPageOverride, totalCategoryPages - 1));
+        }
+
+        int pageStartIndex = categoryPage * categoriesPerPage;
+        int pageEndIndex = Math.min(pageStartIndex + categoriesPerPage, categories.size());
+        if (categoryIndex < pageStartIndex || categoryIndex >= pageEndIndex) {
+            categoryIndex = pageStartIndex;
         }
 
         ShopCategory category = categories.get(categoryIndex);
@@ -574,6 +600,9 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 category.getDisplayName(),
                 categoryIndex,
                 categories.size(),
+                categoryPage,
+                totalCategoryPages,
+                categoriesPerPage,
                 page,
                 totalPages
         );
@@ -618,19 +647,23 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     }
 
     private void populateCategoryTabs(ShopInventoryHolder holder, Inventory inventory, List<ShopCategory> categories, int activeIndex) {
-        int index = 0;
-        for (ShopCategory category : categories) {
-            if (index >= TAB_SLOTS.length) {
-                break;
-            }
-            int slot = TAB_SLOTS[index];
+        for (int slot : CATEGORY_DISPLAY_SLOTS) {
+            inventory.setItem(slot, createFiller());
+        }
+
+        int startIndex = holder.getCategoryPage() * holder.getCategoriesPerPage();
+        int endIndex = Math.min(startIndex + holder.getCategoriesPerPage(), categories.size());
+        int slotPointer = 0;
+        for (int categoryIndex = startIndex; categoryIndex < endIndex; categoryIndex++) {
+            int slot = CATEGORY_DISPLAY_SLOTS[slotPointer++];
+            ShopCategory category = categories.get(categoryIndex);
             ItemStack icon = new ItemStack(category.getIcon());
             ItemMeta meta = icon.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName(category.getDisplayName());
                 List<String> lore = new ArrayList<>();
                 lore.add("§7Clique pour ouvrir");
-                if (index == activeIndex) {
+                if (categoryIndex == activeIndex) {
                     lore.add("§a(onglet actuel)");
                     meta.addEnchant(Enchantment.ARROW_INFINITE, 1, true);
                     meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
@@ -639,11 +672,23 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 icon.setItemMeta(meta);
             }
             inventory.setItem(slot, icon);
-            holder.registerCategorySlot(slot, index);
-            index++;
+            holder.registerCategorySlot(slot, categoryIndex);
         }
-        while (index < TAB_SLOTS.length) {
-            inventory.setItem(TAB_SLOTS[index++], createFiller());
+
+        if (holder.getTotalCategoryPages() > 1 && holder.getCategoryPage() > 0) {
+            List<String> lore = List.of("§7Page §e" + holder.getCategoryPage() + "§7/§e" + holder.getTotalCategoryPages());
+            inventory.setItem(CATEGORY_PREVIOUS_SLOT, createNavItem(Material.ARROW, "§aCatégories précédentes", lore));
+            holder.registerCategoryPageSlot(CATEGORY_PREVIOUS_SLOT, holder.getCategoryPage() - 1);
+        } else {
+            inventory.setItem(CATEGORY_PREVIOUS_SLOT, createFiller());
+        }
+
+        if (holder.getTotalCategoryPages() > 1 && holder.getCategoryPage() + 1 < holder.getTotalCategoryPages()) {
+            List<String> lore = List.of("§7Page §e" + (holder.getCategoryPage() + 2) + "§7/§e" + holder.getTotalCategoryPages());
+            inventory.setItem(CATEGORY_NEXT_SLOT, createNavItem(Material.ARROW, "§aCatégories suivantes", lore));
+            holder.registerCategoryPageSlot(CATEGORY_NEXT_SLOT, holder.getCategoryPage() + 1);
+        } else {
+            inventory.setItem(CATEGORY_NEXT_SLOT, createFiller());
         }
     }
 
@@ -736,12 +781,27 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
         ShopTemplate currentTemplate = templates.get(holder.getTemplateKey());
         if (slot == PREVIOUS_SLOT && holder.getPage() > 0 && currentTemplate != null) {
-            openTemplate(player, currentTemplate, holder.getCategoryIndex(), holder.getPage() - 1);
+            openTemplate(player, currentTemplate, holder.getCategoryIndex(), holder.getPage() - 1, holder.getCategoryPage());
             return;
         }
 
         if (slot == NEXT_SLOT && holder.getPage() + 1 < holder.getTotalPages() && currentTemplate != null) {
-            openTemplate(player, currentTemplate, holder.getCategoryIndex(), holder.getPage() + 1);
+            openTemplate(player, currentTemplate, holder.getCategoryIndex(), holder.getPage() + 1, holder.getCategoryPage());
+            return;
+        }
+
+        Optional<Integer> categoryPageTarget = holder.getCategoryPageTarget(slot);
+        if (categoryPageTarget.isPresent() && currentTemplate != null) {
+            int targetPage = categoryPageTarget.get();
+            List<ShopCategory> categories = currentTemplate.getCategories();
+            if (!categories.isEmpty()) {
+                int categoriesPerPage = holder.getCategoriesPerPage();
+                int newCategoryIndex = targetPage * categoriesPerPage;
+                if (newCategoryIndex >= categories.size()) {
+                    newCategoryIndex = categories.size() - 1;
+                }
+                openTemplate(player, currentTemplate, newCategoryIndex, 0, targetPage);
+            }
             return;
         }
 

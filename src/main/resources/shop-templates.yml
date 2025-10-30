@@ -828,7 +828,523 @@ templates:
             amount: 16
             buy-price: 80
             sell-price: 48
-          - item: BLACK_CANDLE
+        - item: BLACK_CANDLE
+          amount: 16
+          buy-price: 80
+          sell-price: 48
+  construction:
+    display-name: '&eBoutique Construction'
+    icon: BRICKS
+    categories:
+      stone:
+        display-name: '&7Pierre'
+        icon: STONE
+        items:
+          - item: STONE
+            amount: 32
+            buy-price: 48
+            sell-price: 30
+          - item: SMOOTH_STONE
+            amount: 32
+            buy-price: 52
+            sell-price: 32
+          - item: STONE_STAIRS
             amount: 16
-            buy-price: 80
-            sell-price: 48
+            buy-price: 38
+            sell-price: 22
+          - item: STONE_SLAB
+            amount: 24
+            buy-price: 32
+            sell-price: 18
+      cobblestone:
+        display-name: '&7Pierre taillée'
+        icon: COBBLESTONE
+        items:
+          - item: COBBLESTONE
+            amount: 32
+            buy-price: 40
+            sell-price: 24
+          - item: COBBLESTONE_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: COBBLESTONE_SLAB
+            amount: 24
+            buy-price: 30
+            sell-price: 16
+          - item: COBBLESTONE_WALL
+            amount: 16
+            buy-price: 34
+            sell-price: 20
+      mossy_cobblestone:
+        display-name: '&2Pierre moussue'
+        icon: MOSSY_COBBLESTONE
+        items:
+          - item: MOSSY_COBBLESTONE
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: MOSSY_COBBLESTONE_STAIRS
+            amount: 16
+            buy-price: 38
+            sell-price: 22
+          - item: MOSSY_COBBLESTONE_SLAB
+            amount: 24
+            buy-price: 34
+            sell-price: 20
+          - item: MOSSY_COBBLESTONE_WALL
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+      stone_bricks:
+        display-name: '&7Briques de pierre'
+        icon: STONE_BRICKS
+        items:
+          - item: STONE_BRICKS
+            amount: 32
+            buy-price: 50
+            sell-price: 30
+          - item: STONE_BRICK_STAIRS
+            amount: 16
+            buy-price: 38
+            sell-price: 22
+          - item: STONE_BRICK_SLAB
+            amount: 24
+            buy-price: 34
+            sell-price: 20
+          - item: STONE_BRICK_WALL
+            amount: 16
+            buy-price: 36
+            sell-price: 20
+      mossy_stone_bricks:
+        display-name: '&2Briques moussues'
+        icon: MOSSY_STONE_BRICKS
+        items:
+          - item: MOSSY_STONE_BRICKS
+            amount: 32
+            buy-price: 56
+            sell-price: 32
+          - item: MOSSY_STONE_BRICK_STAIRS
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+          - item: MOSSY_STONE_BRICK_SLAB
+            amount: 24
+            buy-price: 36
+            sell-price: 20
+          - item: MOSSY_STONE_BRICK_WALL
+            amount: 16
+            buy-price: 42
+            sell-price: 24
+      deepslate:
+        display-name: '&8Ardoise'
+        icon: COBBLED_DEEPSLATE
+        items:
+          - item: COBBLED_DEEPSLATE
+            amount: 32
+            buy-price: 54
+            sell-price: 32
+          - item: COBBLED_DEEPSLATE_STAIRS
+            amount: 16
+            buy-price: 38
+            sell-price: 22
+          - item: COBBLED_DEEPSLATE_SLAB
+            amount: 24
+            buy-price: 34
+            sell-price: 20
+          - item: COBBLED_DEEPSLATE_WALL
+            amount: 16
+            buy-price: 38
+            sell-price: 22
+          - item: POLISHED_DEEPSLATE
+            amount: 32
+            buy-price: 58
+            sell-price: 34
+      blackstone:
+        display-name: '&0Roche noire'
+        icon: BLACKSTONE
+        items:
+          - item: BLACKSTONE
+            amount: 32
+            buy-price: 58
+            sell-price: 34
+          - item: BLACKSTONE_STAIRS
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+          - item: BLACKSTONE_SLAB
+            amount: 24
+            buy-price: 36
+            sell-price: 20
+          - item: BLACKSTONE_WALL
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+          - item: POLISHED_BLACKSTONE
+            amount: 32
+            buy-price: 60
+            sell-price: 36
+      bricks:
+        display-name: '&cBriques'
+        icon: BRICKS
+        items:
+          - item: BRICKS
+            amount: 32
+            buy-price: 60
+            sell-price: 36
+          - item: BRICK_STAIRS
+            amount: 16
+            buy-price: 42
+            sell-price: 26
+          - item: BRICK_SLAB
+            amount: 24
+            buy-price: 38
+            sell-price: 22
+          - item: BRICK_WALL
+            amount: 16
+            buy-price: 42
+            sell-price: 26
+      sandstone:
+        display-name: '&eGrès'
+        icon: SANDSTONE
+        items:
+          - item: SANDSTONE
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: SMOOTH_SANDSTONE
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: SANDSTONE_STAIRS
+            amount: 16
+            buy-price: 36
+            sell-price: 20
+          - item: SANDSTONE_SLAB
+            amount: 24
+            buy-price: 32
+            sell-price: 18
+      quartz:
+        display-name: '&fQuartz'
+        icon: QUARTZ_BLOCK
+        items:
+          - item: QUARTZ_BLOCK
+            amount: 32
+            buy-price: 72
+            sell-price: 44
+          - item: QUARTZ_PILLAR
+            amount: 32
+            buy-price: 74
+            sell-price: 44
+          - item: QUARTZ_STAIRS
+            amount: 16
+            buy-price: 46
+            sell-price: 26
+          - item: QUARTZ_SLAB
+            amount: 24
+            buy-price: 40
+            sell-price: 22
+      oak:
+        display-name: '&6Chêne'
+        icon: OAK_LOG
+        items:
+          - item: OAK_LOG
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: STRIPPED_OAK_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: OAK_WOOD
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: OAK_PLANKS
+            amount: 32
+            buy-price: 40
+            sell-price: 24
+          - item: OAK_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: OAK_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      spruce:
+        display-name: '&6Sapin'
+        icon: SPRUCE_LOG
+        items:
+          - item: SPRUCE_LOG
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: STRIPPED_SPRUCE_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: SPRUCE_WOOD
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: SPRUCE_PLANKS
+            amount: 32
+            buy-price: 40
+            sell-price: 24
+          - item: SPRUCE_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: SPRUCE_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      birch:
+        display-name: '&eBouleau'
+        icon: BIRCH_LOG
+        items:
+          - item: BIRCH_LOG
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: STRIPPED_BIRCH_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: BIRCH_WOOD
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: BIRCH_PLANKS
+            amount: 32
+            buy-price: 40
+            sell-price: 24
+          - item: BIRCH_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: BIRCH_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      jungle:
+        display-name: '&6Acajou'
+        icon: JUNGLE_LOG
+        items:
+          - item: JUNGLE_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: STRIPPED_JUNGLE_LOG
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: JUNGLE_WOOD
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: JUNGLE_PLANKS
+            amount: 32
+            buy-price: 42
+            sell-price: 24
+          - item: JUNGLE_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: JUNGLE_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      acacia:
+        display-name: '&6Acacia'
+        icon: ACACIA_LOG
+        items:
+          - item: ACACIA_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: STRIPPED_ACACIA_LOG
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: ACACIA_WOOD
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: ACACIA_PLANKS
+            amount: 32
+            buy-price: 42
+            sell-price: 24
+          - item: ACACIA_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: ACACIA_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      dark_oak:
+        display-name: '&6Chêne noir'
+        icon: DARK_OAK_LOG
+        items:
+          - item: DARK_OAK_LOG
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: STRIPPED_DARK_OAK_LOG
+            amount: 32
+            buy-price: 50
+            sell-price: 28
+          - item: DARK_OAK_WOOD
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: DARK_OAK_PLANKS
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: DARK_OAK_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: DARK_OAK_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16
+      mangrove:
+        display-name: '&cPalétuvier'
+        icon: MANGROVE_LOG
+        items:
+          - item: MANGROVE_LOG
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: STRIPPED_MANGROVE_LOG
+            amount: 32
+            buy-price: 50
+            sell-price: 28
+          - item: MANGROVE_WOOD
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: MANGROVE_PLANKS
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: MANGROVE_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: MANGROVE_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16
+      cherry:
+        display-name: '&dCerisier'
+        icon: CHERRY_LOG
+        items:
+          - item: CHERRY_LOG
+            amount: 32
+            buy-price: 50
+            sell-price: 28
+          - item: STRIPPED_CHERRY_LOG
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: CHERRY_WOOD
+            amount: 32
+            buy-price: 50
+            sell-price: 28
+          - item: CHERRY_PLANKS
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: CHERRY_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: CHERRY_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16
+      bamboo:
+        display-name: '&aBambou'
+        icon: BAMBOO_BLOCK
+        items:
+          - item: BAMBOO_BLOCK
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: STRIPPED_BAMBOO_BLOCK
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: BAMBOO_PLANKS
+            amount: 32
+            buy-price: 42
+            sell-price: 24
+          - item: BAMBOO_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: BAMBOO_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      crimson:
+        display-name: '&5Cramoisie'
+        icon: CRIMSON_STEM
+        items:
+          - item: CRIMSON_STEM
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: STRIPPED_CRIMSON_STEM
+            amount: 32
+            buy-price: 54
+            sell-price: 32
+          - item: CRIMSON_HYPHAE
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: CRIMSON_PLANKS
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: CRIMSON_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: CRIMSON_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16
+      warped:
+        display-name: '&3Tordue'
+        icon: WARPED_STEM
+        items:
+          - item: WARPED_STEM
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: STRIPPED_WARPED_STEM
+            amount: 32
+            buy-price: 54
+            sell-price: 32
+          - item: WARPED_HYPHAE
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: WARPED_PLANKS
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: WARPED_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: WARPED_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16

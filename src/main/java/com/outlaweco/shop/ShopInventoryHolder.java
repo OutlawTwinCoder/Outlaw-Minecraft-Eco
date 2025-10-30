@@ -14,8 +14,12 @@ public class ShopInventoryHolder implements InventoryHolder {
     private final String categoryDisplayName;
     private final int categoryIndex;
     private final int totalCategories;
+    private final int categoryPage;
+    private final int totalCategoryPages;
+    private final int categoriesPerPage;
     private final Map<Integer, ShopOffer> offerSlots = new HashMap<>();
     private final Map<Integer, Integer> categoryTargets = new HashMap<>();
+    private final Map<Integer, Integer> categoryPageTargets = new HashMap<>();
     private final int page;
     private final int totalPages;
 
@@ -24,6 +28,9 @@ public class ShopInventoryHolder implements InventoryHolder {
                                String categoryDisplayName,
                                int categoryIndex,
                                int totalCategories,
+                               int categoryPage,
+                               int totalCategoryPages,
+                               int categoriesPerPage,
                                int page,
                                int totalPages) {
         this.templateKey = templateKey;
@@ -31,6 +38,9 @@ public class ShopInventoryHolder implements InventoryHolder {
         this.categoryDisplayName = categoryDisplayName;
         this.categoryIndex = categoryIndex;
         this.totalCategories = totalCategories;
+        this.categoryPage = categoryPage;
+        this.totalCategoryPages = totalCategoryPages;
+        this.categoriesPerPage = categoriesPerPage;
         this.page = page;
         this.totalPages = totalPages;
     }
@@ -55,6 +65,18 @@ public class ShopInventoryHolder implements InventoryHolder {
         return totalCategories;
     }
 
+    public int getCategoryPage() {
+        return categoryPage;
+    }
+
+    public int getTotalCategoryPages() {
+        return totalCategoryPages;
+    }
+
+    public int getCategoriesPerPage() {
+        return categoriesPerPage;
+    }
+
     public int getPage() {
         return page;
     }
@@ -77,6 +99,14 @@ public class ShopInventoryHolder implements InventoryHolder {
 
     public Optional<Integer> getCategoryTarget(int slot) {
         return Optional.ofNullable(categoryTargets.get(slot));
+    }
+
+    public void registerCategoryPageSlot(int slot, int targetPage) {
+        categoryPageTargets.put(slot, targetPage);
+    }
+
+    public Optional<Integer> getCategoryPageTarget(int slot) {
+        return Optional.ofNullable(categoryPageTargets.get(slot));
     }
 
     @Override
