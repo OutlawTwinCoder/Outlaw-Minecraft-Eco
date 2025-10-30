@@ -33,13 +33,13 @@ Plugin Paper/Spigot pour offrir un système d'économie centralisé avec boutiqu
 ### Administrateurs (`outlawecoadmin`)
 | Commande | Description |
 | --- | --- |
-| `/shop create <template>` | Crée une boutique PNJ. |
+| `/shop create <template ou general>` | Crée une boutique PNJ ou place le NPC du magasin général. |
 | `/shop remove` | Supprime la boutique ciblée. |
 | `/shop list [templates]` | Liste les boutiques créées ou les templates disponibles. |
 | `/shop add itemshop <template> <item> <quantité> <prixAchat> [prixVente]` | Ajoute un objet à un template simple. |
 | `/shop removeitem <template> <item>` | Retire un objet d'un template simple. |
 | `/shop reloadtemplates` | Recharge les templates depuis le fichier YAML. |
-| `/shop setting price` | Ouvre le menu de définition des prix pour les items. |
+| `/shop setting price` | Ouvre le menu de définition des prix pour les items et met à jour `shop-templates.yml`. |
 
 ## Configuration (`config.yml`)
 ```yaml
@@ -89,7 +89,7 @@ Assurez-vous que votre plugin déclare une dépendance vers OutlawEconomy (via `
 
 ## Création de boutiques NPC
 - Les boutiques sont basées sur des villageois invulnérables.
-- Effectuez `/shop create <type>` à l'endroit souhaité pour placer le NPC.
+- Effectuez `/shop create <type>` à l'endroit souhaité pour placer le NPC (`general` pour le magasin commun).
 - Les joueurs interagissent avec le NPC pour ouvrir le menu d'achat/vente. Clic gauche = achat, clic droit = vente.
 - Les boutiques sont sauvegardées dans `plugins/OutlawEconomy/shops.yml`.
 

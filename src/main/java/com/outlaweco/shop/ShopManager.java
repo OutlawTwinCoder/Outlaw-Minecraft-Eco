@@ -41,6 +41,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private static final String PERMISSION_ADMIN = "outlawecoadmin";
     private static final int GENERAL_PAGE_SIZE = 30;
     private static final int PRICE_PAGE_SIZE = 45;
+    private static final String GENERAL_TEMPLATE_KEY = "general";
+    private static final String GENERAL_DISPLAY_NAME = "§2Magasin général";
 
     private final OutlawEconomyPlugin plugin;
     private final EconomyManager economyManager;
@@ -50,13 +52,10 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private FileConfiguration templatesConfig;
     private final File generalShopFile;
     private FileConfiguration generalShopConfig;
-    private final File pricesFile;
-    private FileConfiguration pricesConfig;
     private final NamespacedKey shopKey;
     private final Map<UUID, Shop> shops = new HashMap<>();
     private final Map<String, ShopTemplate> templates = new HashMap<>();
     private final Map<UUID, GeneralShopListing> generalListings = new LinkedHashMap<>();
-    private final Map<Material, Double> adminPrices = new HashMap<>();
     private final Map<UUID, PendingPriceInput> pendingPriceInputs = new HashMap<>();
     private final Map<UUID, PendingListingInput> pendingListingInputs = new HashMap<>();
     private final List<Material> selectableMaterials;
@@ -103,21 +102,9 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
         this.generalShopConfig = YamlConfiguration.loadConfiguration(generalShopFile);
 
-        this.pricesFile = new File(plugin.getDataFolder(), "item-prices.yml");
-        if (!pricesFile.exists()) {
-            try {
-                pricesFile.getParentFile().mkdirs();
-                pricesFile.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().severe("Impossible de créer item-prices.yml: " + e.getMessage());
-            }
-        }
-        this.pricesConfig = YamlConfiguration.loadConfiguration(pricesFile);
-
         loadTemplates();
         loadShops();
         loadGeneralStore();
-        loadAdminPrices();
     }
 
     private void loadTemplates() {
@@ -275,30 +262,15 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
-    private void loadAdminPrices() {
-        adminPrices.clear();
-        ConfigurationSection section = pricesConfig.getConfigurationSection("prices");
-        if (section == null) {
-            return;
-        }
-        for (String key : section.getKeys(false)) {
-            Material material = Material.matchMaterial(key);
-            if (material == null) {
-                plugin.getLogger().warning("Matériau inconnu pour le prix: " + key);
-                continue;
-            }
-            double price = section.getDouble(key);
-            if (price > 0) {
-                adminPrices.put(material, price);
-            }
-        }
-    }
-
     private void spawnShopEntity(Shop shop) {
         ShopTemplate template = templates.get(shop.getTemplateKey());
         Villager villager = shop.spawn(template);
         if (villager == null) {
             return;
+        }
+        if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
+            villager.setCustomName(GENERAL_DISPLAY_NAME);
+            villager.setCustomNameVisible(true);
         }
         villager.setVillagerLevel(5);
         PersistentDataContainer data = villager.getPersistentDataContainer();
@@ -382,7 +354,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
         if (isAdmin) {
             player.sendMessage("§e--- Admin ---");
-            player.sendMessage("§e/shop create <template>§7 - créer une boutique PNJ");
+            player.sendMessage("§e/shop create <template|general>§7 - créer une boutique PNJ ou le magasin général");
             player.sendMessage("§e/shop remove§7 - supprimer la boutique ciblée");
             player.sendMessage("§e/shop list [templates]§7 - liste des boutiques ou templates");
             player.sendMessage("§e/shop add itemshop <template> <item> <quantité> <prixAchat> [prixVente]§7 - ajouter un objet");
@@ -431,6 +403,11 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return true;
         }
         String templateKey = args[1].toLowerCase(Locale.ROOT);
+        if (templateKey.equals(GENERAL_TEMPLATE_KEY)) {
+            createShop(player, templateKey);
+            player.sendMessage("§aNPC du magasin général créé.");
+            return true;
+        }
         ShopTemplate template = templates.get(templateKey);
         if (template == null) {
             player.sendMessage("§cTemplate introuvable.");
@@ -575,14 +552,21 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private void updateVillagers() {
         for (Shop shop : shops.values()) {
+            Villager villager = shop.getVillager();
+            if (villager == null) {
+                continue;
+            }
+            if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
+                villager.setCustomName(GENERAL_DISPLAY_NAME);
+                villager.setCustomNameVisible(true);
+                continue;
+            }
             ShopTemplate template = templates.get(shop.getTemplateKey());
             if (template == null) {
                 continue;
             }
-            Villager villager = shop.getVillager();
-            if (villager != null) {
-                villager.setCustomName(template.getDisplayName());
-            }
+            villager.setCustomName(template.getDisplayName());
+            villager.setCustomNameVisible(true);
         }
     }
 
@@ -600,19 +584,6 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             this.generalShopConfig = config;
         } catch (IOException e) {
             plugin.getLogger().severe("Impossible d'enregistrer general-shop.yml: " + e.getMessage());
-        }
-    }
-
-    private void saveAdminPrices() {
-        YamlConfiguration config = new YamlConfiguration();
-        for (Map.Entry<Material, Double> entry : adminPrices.entrySet()) {
-            config.set("prices." + entry.getKey().name(), entry.getValue());
-        }
-        try {
-            config.save(pricesFile);
-            this.pricesConfig = config;
-        } catch (IOException e) {
-            plugin.getLogger().severe("Impossible d'enregistrer item-prices.yml: " + e.getMessage());
         }
     }
 
@@ -650,7 +621,14 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         for (Shop shop : shops.values()) {
             Location loc = shop.getLocation();
             ShopTemplate template = templates.get(shop.getTemplateKey());
-            String display = template != null ? ChatColor.stripColor(template.getDisplayName()) : shop.getTemplateKey();
+            String display;
+            if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
+                display = ChatColor.stripColor(GENERAL_DISPLAY_NAME);
+            } else if (template != null) {
+                display = ChatColor.stripColor(template.getDisplayName());
+            } else {
+                display = shop.getTemplateKey();
+            }
             player.sendMessage("§e- " + display + " §7@ " + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ());
         }
     }
@@ -775,11 +753,11 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
                 List<String> lore = new ArrayList<>();
-                Double price = adminPrices.get(material);
-                if (price != null) {
-                    lore.add("§7Prix actuel: §e" + String.format(Locale.US, "%.2f", price));
+                OptionalDouble price = findCurrentBuyPrice(material);
+                if (price.isPresent()) {
+                    lore.add("§7Prix actuel: §e" + String.format(Locale.US, "%.2f", price.getAsDouble()));
                 } else {
-                    lore.add("§7Aucun prix défini");
+                    lore.add("§7Aucun prix défini dans les templates");
                 }
                 lore.add("§eClique pour définir un prix");
                 meta.setLore(lore);
@@ -906,6 +884,10 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         Player player = event.getPlayer();
         if (!player.hasPermission(PERMISSION_USE) && !player.hasPermission(PERMISSION_ADMIN)) {
             player.sendMessage("§cVous n'avez pas la permission d'utiliser cette boutique.");
+            return;
+        }
+        if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
+            openGeneralStore(player, 0);
             return;
         }
         ShopTemplate template = templates.get(shop.getTemplateKey());
@@ -1171,6 +1153,24 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         return message.equalsIgnoreCase("cancel") || message.equalsIgnoreCase("annuler");
     }
 
+    private OptionalDouble findCurrentBuyPrice(Material material) {
+        for (ShopTemplate template : templates.values()) {
+            OptionalDouble found = template.findBuyPrice(material);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return OptionalDouble.empty();
+    }
+
+    private int updateMaterialBuyPrice(Material material, double price) {
+        int updated = 0;
+        for (ShopTemplate template : templates.values()) {
+            updated += template.updateBuyPrice(material, price);
+        }
+        return updated;
+    }
+
     private void handlePendingPriceChat(Player player, UUID uuid, PendingPriceInput pending, String message) {
         if (isCancelMessage(message)) {
             pendingPriceInputs.remove(uuid);
@@ -1194,9 +1194,15 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         pendingPriceInputs.remove(uuid);
         double price = value;
         Bukkit.getScheduler().runTask(plugin, () -> {
-            adminPrices.put(pending.material(), price);
-            saveAdminPrices();
-            player.sendMessage("§aPrix défini pour §6" + formatMaterialName(pending.material()) + "§a: §e" + formatPrice(price));
+            int updated = updateMaterialBuyPrice(pending.material(), price);
+            if (updated <= 0) {
+                player.sendMessage("§cAucun template ne contient cet objet. Aucun prix mis à jour.");
+                openPriceSelector(player, pending.page());
+                return;
+            }
+            saveTemplates();
+            player.sendMessage("§aPrix défini pour §6" + formatMaterialName(pending.material()) + "§a: §e" + formatPrice(price)
+                    + " §7(" + updated + " offre" + (updated > 1 ? "s" : "") + ")");
             openPriceSelector(player, pending.page());
         });
     }
@@ -1307,7 +1313,12 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 options.add("shop");
                 return filterByPrefix(options, args[1]);
             }
-            if (isAdmin && (args[0].equalsIgnoreCase("create") || args[0].equalsIgnoreCase("removeitem"))) {
+            if (isAdmin && args[0].equalsIgnoreCase("create")) {
+                List<String> options = new ArrayList<>(templates.keySet());
+                options.add(GENERAL_TEMPLATE_KEY);
+                return filterByPrefix(options, args[1]);
+            }
+            if (isAdmin && args[0].equalsIgnoreCase("removeitem")) {
                 return filterByPrefix(templates.keySet(), args[1]);
             }
             if (isAdmin && args[0].equalsIgnoreCase("list")) {
@@ -1343,7 +1354,6 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     public void shutdown() {
         saveGeneralStore();
-        saveAdminPrices();
     }
 
     private record PendingPriceInput(Material material, int page) {
