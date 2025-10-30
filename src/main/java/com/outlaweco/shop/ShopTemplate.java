@@ -2,9 +2,7 @@ package com.outlaweco.shop;
 
 import org.bukkit.ChatColor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ShopTemplate {
 
@@ -12,6 +10,7 @@ public class ShopTemplate {
     private String displayName;
     private String rawDisplayName;
     private final List<ShopOffer> offers = new ArrayList<>();
+    private final Map<String, ShopCategory> categories = new LinkedHashMap<>();
 
     public ShopTemplate(String key, String displayName) {
         this.key = key.toLowerCase();
@@ -60,5 +59,29 @@ public class ShopTemplate {
             return false;
         }
         return offers.removeIf(offer -> offer.getMaterial() == material);
+    }
+
+    public void setCategories(List<ShopCategory> categories) {
+        this.categories.clear();
+        if (categories != null) {
+            for (ShopCategory category : categories) {
+                this.categories.put(category.getKey().toLowerCase(Locale.ROOT), category);
+            }
+        }
+    }
+
+    public boolean hasCategories() {
+        return !categories.isEmpty();
+    }
+
+    public List<ShopCategory> getCategories() {
+        return List.copyOf(categories.values());
+    }
+
+    public ShopCategory getCategory(String key) {
+        if (key == null) {
+            return null;
+        }
+        return categories.get(key.toLowerCase(Locale.ROOT));
     }
 }
