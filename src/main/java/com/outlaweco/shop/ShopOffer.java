@@ -1,0 +1,27 @@
+package com.outlaweco.shop;
+
+import org.bukkit.inventory.ItemStack;
+
+public class ShopOffer {
+    private final ItemStack item;
+    private final double buyPrice;
+    private final double sellPrice;
+
+    public ShopOffer(ItemStack item, double buyPrice, double sellPrice) {
+        this.item = item;
+        this.buyPrice = buyPrice;
+        this.sellPrice = sellPrice;
+    }
+
+    public ItemStack item() {
+        return item.clone();
+    }
+
+    public double buyPrice() {
+        return buyPrice;
+    }
+
+    public double sellPrice() {
+        return sellPrice;
+    }
+}

@@ -1,0 +1,22 @@
+name: OutlawEconomy
+version: 1.0.0
+main: com.outlaweco.OutlawEconomyPlugin
+api-version: 1.20
+authors:
+  - OutlawMC
+commands:
+  balance:
+    description: Check your balance
+  pay:
+    description: Send money to another player
+    usage: /pay <player> <amount>
+  trade:
+    description: Start a trade with another player
+    usage: /trade <player>
+  shop:
+    description: Manage NPC shops
+    usage: /shop <create|remove|list>
+permissions:
+  outlaweconomy.admin:
+    description: Allows managing shops and balances
+    default: op
