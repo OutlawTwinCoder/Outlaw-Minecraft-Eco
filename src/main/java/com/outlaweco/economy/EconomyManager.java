@@ -160,19 +160,20 @@ public class EconomyManager implements EconomyService, Listener {
 
         if (current == null || current == manager.getMainScoreboard() || objective == null) {
             Scoreboard scoreboard = manager.getNewScoreboard();
-            Objective newObjective = scoreboard.registerNewObjective(SCOREBOARD_OBJECTIVE, "dummy", ChatColor.GOLD + "Économie");
+            Objective newObjective = scoreboard.registerNewObjective(SCOREBOARD_OBJECTIVE, "dummy", ChatColor.GOLD + "Argent");
             newObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-            // Add a label line and spacer to keep layout stable.
-            newObjective.getScore(ChatColor.YELLOW + "Solde").setScore(3);
-            newObjective.getScore(ChatColor.DARK_GRAY.toString()).setScore(2);
+            applyBlankNumberFormat(newObjective);
 
             Team balanceTeam = scoreboard.registerNewTeam(BALANCE_TEAM);
             balanceTeam.addEntry(BALANCE_ENTRY);
             newObjective.getScore(BALANCE_ENTRY).setScore(1);
 
             player.setScoreboard(scoreboard);
+            return;
         }
+
+        objective.setDisplayName(ChatColor.GOLD + "Argent");
+        applyBlankNumberFormat(objective);
     }
 
     private void updateBalanceDisplay(UUID playerId) {
@@ -183,16 +184,37 @@ public class EconomyManager implements EconomyService, Listener {
 
         setupSidebar(player);
         Scoreboard scoreboard = player.getScoreboard();
+        Objective objective = scoreboard.getObjective(SCOREBOARD_OBJECTIVE);
+        applyBlankNumberFormat(objective);
+
         Team team = scoreboard.getTeam(BALANCE_TEAM);
         if (team == null) {
             team = scoreboard.registerNewTeam(BALANCE_TEAM);
             team.addEntry(BALANCE_ENTRY);
-            Objective objective = scoreboard.getObjective(SCOREBOARD_OBJECTIVE);
             if (objective != null) {
                 objective.getScore(BALANCE_ENTRY).setScore(1);
             }
         }
 
-        team.setPrefix(ChatColor.GREEN + decimalFormat.format(getBalance(playerId)));
+        double balance = balances.computeIfAbsent(
+                playerId,
+                id -> plugin.getConfig().getDouble("economy.starting-balance", 0)
+        );
+        team.setPrefix(ChatColor.GREEN + decimalFormat.format(balance) + "$");
+    }
+
+    private void applyBlankNumberFormat(Objective objective) {
+        if (objective == null) {
+            return;
+        }
+        try {
+            Class<?> numberFormatClass = Class.forName("org.bukkit.scoreboard.NumberFormat");
+            Object blankFormat = numberFormatClass.getMethod("blank").invoke(null);
+            objective.getClass().getMethod("setNumberFormat", numberFormatClass).invoke(objective, blankFormat);
+        } catch (ClassNotFoundException ignored) {
+            // API level does not support number formatting; ignore so we stay compatible with older servers.
+        } catch (ReflectiveOperationException e) {
+            plugin.getLogger().fine("Impossible d'appliquer le format de numéro vierge : " + e.getMessage());
+        }
     }
 }

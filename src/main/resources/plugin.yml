@@ -7,6 +7,7 @@ authors:
 commands:
   balance:
     description: Check your balance
+    usage: /balance
   pay:
     description: Send money to another player
     usage: /pay <player> <amount>
@@ -14,9 +15,12 @@ commands:
     description: Start a trade with another player
     usage: /trade <player>
   shop:
-    description: Manage NPC shops
-    usage: /shop <create|remove|list>
+    description: Manage and open shops
+    usage: /shop <open|create|remove|list>
 permissions:
-  outlaweconomy.admin:
-    description: Allows managing shops and balances
+  outlaweco.use:
+    description: Allows opening shop templates
+    default: false
+  outlawecoadmin:
+    description: Allows managing shops and templates
     default: op
