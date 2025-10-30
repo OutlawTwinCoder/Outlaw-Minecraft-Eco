@@ -96,25 +96,59 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             List<Map<?, ?>> items = section.getMapList("items");
             List<ShopOffer> offers = new ArrayList<>();
             for (Map<?, ?> entry : items) {
-                String materialName = Objects.toString(entry.get("item"), "");
-                Material material = Material.matchMaterial(materialName);
-                if (material == null) {
-                    plugin.getLogger().warning("Matériau invalide '" + materialName + "' pour le template " + key);
-                    continue;
-                }
-                int amount = 1;
-                Object amountObj = entry.get("amount");
-                if (amountObj instanceof Number number) {
-                    amount = Math.max(1, number.intValue());
-                }
-                double buyPrice = getDouble(entry.get("buy-price"), 0.0);
-                double sellPrice = getDouble(entry.get("sell-price"), 0.0);
-                ItemStack stack = new ItemStack(material, amount);
-                offers.add(new ShopOffer(stack, buyPrice, sellPrice));
+                parseOffer(key, offers, entry);
             }
             template.setOffers(offers);
+
+            ConfigurationSection categoriesSection = section.getConfigurationSection("categories");
+            if (categoriesSection != null) {
+                List<ShopCategory> categories = new ArrayList<>();
+                for (String categoryKey : categoriesSection.getKeys(false)) {
+                    ConfigurationSection categorySection = categoriesSection.getConfigurationSection(categoryKey);
+                    if (categorySection == null) {
+                        continue;
+                    }
+                    ShopCategory category = new ShopCategory(categoryKey, categorySection.getString("display-name"));
+                    String iconName = categorySection.getString("icon");
+                    if (iconName != null && !iconName.isBlank()) {
+                        Material iconMaterial = Material.matchMaterial(iconName);
+                        if (iconMaterial == null) {
+                            plugin.getLogger().warning("Icône invalide '" + iconName + "' pour la catégorie " + categoryKey +
+                                    " du template " + key);
+                        } else {
+                            category.setIconMaterial(iconMaterial);
+                        }
+                    }
+                    List<Map<?, ?>> categoryItems = categorySection.getMapList("items");
+                    List<ShopOffer> categoryOffers = new ArrayList<>();
+                    for (Map<?, ?> entry : categoryItems) {
+                        parseOffer(key + ":" + categoryKey, categoryOffers, entry);
+                    }
+                    category.setOffers(categoryOffers);
+                    categories.add(category);
+                }
+                template.setCategories(categories);
+            }
             templates.put(template.getKey(), template);
         }
+    }
+
+    private void parseOffer(String context, List<ShopOffer> offers, Map<?, ?> entry) {
+        String materialName = Objects.toString(entry.get("item"), "");
+        Material material = Material.matchMaterial(materialName);
+        if (material == null) {
+            plugin.getLogger().warning("Matériau invalide '" + materialName + "' pour " + context);
+            return;
+        }
+        int amount = 1;
+        Object amountObj = entry.get("amount");
+        if (amountObj instanceof Number number) {
+            amount = Math.max(1, number.intValue());
+        }
+        double buyPrice = getDouble(entry.get("buy-price"), 0.0);
+        double sellPrice = getDouble(entry.get("sell-price"), 0.0);
+        ItemStack stack = new ItemStack(material, amount);
+        offers.add(new ShopOffer(stack, buyPrice, sellPrice));
     }
 
     private double getDouble(Object value, double def) {
@@ -323,6 +357,10 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§cTemplate introuvable.");
             return true;
         }
+        if (template.hasCategories()) {
+            player.sendMessage("§cAjoutez les objets directement dans le fichier de configuration pour cette boutique à onglets.");
+            return true;
+        }
         Material material = Material.matchMaterial(args[3]);
         if (material == null) {
             player.sendMessage("§cMatériau invalide.");
@@ -371,6 +409,10 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         ShopTemplate template = templates.get(templateKey);
         if (template == null) {
             player.sendMessage("§cTemplate introuvable.");
+            return true;
+        }
+        if (template.hasCategories()) {
+            player.sendMessage("§cRetirez les objets via la configuration pour cette boutique à onglets.");
             return true;
         }
         boolean removed = template.removeOffer(args[2]);
@@ -473,10 +515,49 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     }
 
     private void openTemplate(Player player, ShopTemplate template) {
-        Inventory inventory = Bukkit.createInventory(new ShopInventoryHolder(template.getKey(), template.getOffers()), 27, template.getDisplayName());
-        List<ShopOffer> offers = template.getOffers();
-        for (int i = 0; i < offers.size() && i < inventory.getSize(); i++) {
-            ShopOffer offer = offers.get(i);
+        if (template.hasCategories()) {
+            openCategorySelection(player, template);
+        } else {
+            openOffersInventory(player, template, null, false);
+        }
+    }
+
+    private void openCategorySelection(Player player, ShopTemplate template) {
+        List<ShopCategory> categories = template.getCategories();
+        if (categories.isEmpty()) {
+            openOffersInventory(player, template, null, false);
+            return;
+        }
+        int size = calculateInventorySize(Math.max(1, categories.size()));
+        int maxSlots = Math.min(categories.size(), size);
+        List<ShopCategory> visibleCategories = new ArrayList<>();
+        for (int i = 0; i < maxSlots; i++) {
+            visibleCategories.add(categories.get(i));
+        }
+        ShopInventoryHolder holder = ShopInventoryHolder.forCategories(template.getKey(), visibleCategories);
+        Inventory inventory = Bukkit.createInventory(holder, size, template.getDisplayName());
+        for (int i = 0; i < visibleCategories.size(); i++) {
+            inventory.setItem(i, visibleCategories.get(i).createIconItem());
+        }
+        player.openInventory(inventory);
+    }
+
+    private void openOffersInventory(Player player, ShopTemplate template, ShopCategory category, boolean allowBack) {
+        List<ShopOffer> offers = category != null ? category.getOffers() : template.getOffers();
+        boolean backButton = allowBack && template.hasCategories();
+        int extraSlots = backButton ? 1 : 0;
+        int size = calculateInventorySize(Math.max(1, offers.size() + extraSlots));
+        int maxSlots = backButton ? size - 1 : size;
+        List<ShopOffer> visibleOffers = new ArrayList<>();
+        for (int i = 0; i < offers.size() && i < maxSlots; i++) {
+            visibleOffers.add(offers.get(i));
+        }
+        ShopInventoryHolder holder = ShopInventoryHolder.forOffers(template.getKey(),
+                category != null ? category.getKey() : null, visibleOffers, backButton);
+        String title = category != null ? category.getDisplayName() : template.getDisplayName();
+        Inventory inventory = Bukkit.createInventory(holder, size, title);
+        for (int i = 0; i < visibleOffers.size(); i++) {
+            ShopOffer offer = visibleOffers.get(i);
             ItemStack item = offer.item();
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
@@ -494,7 +575,25 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             }
             inventory.setItem(i, item);
         }
+        if (backButton) {
+            ItemStack back = new ItemStack(Material.ARROW);
+            ItemMeta meta = back.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§eRetour");
+                meta.setLore(List.of("§7Revenir à la sélection de catégories."));
+                back.setItemMeta(meta);
+            }
+            inventory.setItem(size - 1, back);
+        }
         player.openInventory(inventory);
+    }
+
+    private int calculateInventorySize(int contentCount) {
+        int size = 9;
+        while (size < contentCount && size < 54) {
+            size += 9;
+        }
+        return size;
     }
 
     @EventHandler
@@ -528,15 +627,36 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return;
         }
         event.setCancelled(true);
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+        int slot = event.getRawSlot();
+        if (slot >= event.getView().getTopInventory().getSize()) {
+            return;
+        }
         ItemStack current = event.getCurrentItem();
         if (current == null || current.getType() == Material.AIR) {
             return;
         }
-        if (!(event.getWhoClicked() instanceof Player player)) {
+        ShopTemplate template = templates.get(holder.getTemplateKey());
+        if (template == null) {
+            player.closeInventory();
+            return;
+        }
+        if (holder.getType() == ShopInventoryType.CATEGORIES) {
+            List<ShopCategory> categories = holder.getCategories();
+            if (slot >= categories.size()) {
+                return;
+            }
+            ShopCategory category = categories.get(slot);
+            openOffersInventory(player, template, category, true);
+            return;
+        }
+        if (holder.hasBackButton() && slot == event.getInventory().getSize() - 1) {
+            openCategorySelection(player, template);
             return;
         }
         List<ShopOffer> offers = holder.getOffers();
-        int slot = event.getRawSlot();
         if (slot >= offers.size()) {
             return;
         }
@@ -682,6 +802,28 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 items.add(map);
             }
             config.set(path + ".items", items);
+            if (template.hasCategories()) {
+                for (ShopCategory category : template.getCategories()) {
+                    String categoryPath = path + ".categories." + category.getKey();
+                    String categoryRaw = category.getRawDisplayName();
+                    if (categoryRaw != null && !categoryRaw.isBlank()) {
+                        config.set(categoryPath + ".display-name", categoryRaw);
+                    }
+                    if (category.hasCustomIcon()) {
+                        config.set(categoryPath + ".icon", category.getIconMaterial().name());
+                    }
+                    List<Map<String, Object>> categoryItems = new ArrayList<>();
+                    for (ShopOffer offer : category.getOffers()) {
+                        Map<String, Object> map = new LinkedHashMap<>();
+                        map.put("item", offer.getMaterial().name());
+                        map.put("amount", offer.getAmount());
+                        map.put("buy-price", offer.buyPrice());
+                        map.put("sell-price", offer.sellPrice());
+                        categoryItems.add(map);
+                    }
+                    config.set(categoryPath + ".items", categoryItems);
+                }
+            }
         }
         try {
             config.save(templatesFile);
