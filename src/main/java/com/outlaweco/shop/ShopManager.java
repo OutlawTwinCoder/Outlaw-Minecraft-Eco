@@ -1351,8 +1351,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private record PendingListingInput(ItemStack item, int page) {
         private PendingListingInput {
-            this.item = Objects.requireNonNull(item, "item").clone();
-            this.page = page;
+            item = Objects.requireNonNull(item, "item").clone();
         }
     }
 
