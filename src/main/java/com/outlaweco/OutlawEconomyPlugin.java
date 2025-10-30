@@ -50,6 +50,9 @@ public class OutlawEconomyPlugin extends JavaPlugin implements Listener {
         if (economyManager != null) {
             economyManager.saveAll();
         }
+        if (shopManager != null) {
+            shopManager.shutdown();
+        }
         EconomyAPI.unregister();
         Bukkit.getServicesManager().unregister(EconomyService.class, economyManager);
     }

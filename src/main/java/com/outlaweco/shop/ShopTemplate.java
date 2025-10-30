@@ -2,6 +2,9 @@ package com.outlaweco.shop;
 
 import org.bukkit.ChatColor;
 
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+
 import java.util.*;
 
 public class ShopTemplate {
@@ -83,5 +86,37 @@ public class ShopTemplate {
             return null;
         }
         return categories.get(key.toLowerCase(Locale.ROOT));
+    }
+
+    public int updateBuyPrice(Material material, double price) {
+        int updated = 0;
+        for (int i = 0; i < offers.size(); i++) {
+            ShopOffer offer = offers.get(i);
+            if (offer.getMaterial() != material) {
+                continue;
+            }
+            ItemStack item = offer.item();
+            offers.set(i, new ShopOffer(item, price, offer.sellPrice()));
+            updated++;
+        }
+        for (ShopCategory category : categories.values()) {
+            updated += category.updateBuyPrice(material, price);
+        }
+        return updated;
+    }
+
+    public OptionalDouble findBuyPrice(Material material) {
+        for (ShopOffer offer : offers) {
+            if (offer.getMaterial() == material) {
+                return OptionalDouble.of(offer.buyPrice());
+            }
+        }
+        for (ShopCategory category : categories.values()) {
+            OptionalDouble found = category.findBuyPrice(material);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return OptionalDouble.empty();
     }
 }

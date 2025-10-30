@@ -21,7 +21,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -37,6 +39,10 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private static final String PERMISSION_USE = "outlaweco.use";
     private static final String PERMISSION_ADMIN = "outlawecoadmin";
+    private static final int GENERAL_PAGE_SIZE = 30;
+    private static final int PRICE_PAGE_SIZE = 45;
+    private static final String GENERAL_TEMPLATE_KEY = "general";
+    private static final String GENERAL_DISPLAY_NAME = "§2Magasin général";
 
     private final OutlawEconomyPlugin plugin;
     private final EconomyManager economyManager;
@@ -44,14 +50,25 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private FileConfiguration shopsConfig;
     private final File templatesFile;
     private FileConfiguration templatesConfig;
+    private final File generalShopFile;
+    private FileConfiguration generalShopConfig;
     private final NamespacedKey shopKey;
     private final Map<UUID, Shop> shops = new HashMap<>();
     private final Map<String, ShopTemplate> templates = new HashMap<>();
+    private final Map<UUID, GeneralShopListing> generalListings = new LinkedHashMap<>();
+    private final Map<UUID, PendingPriceInput> pendingPriceInputs = new HashMap<>();
+    private final Map<UUID, PendingListingInput> pendingListingInputs = new HashMap<>();
+    private final List<Material> selectableMaterials;
 
     public ShopManager(OutlawEconomyPlugin plugin) {
         this.plugin = plugin;
         this.economyManager = plugin.getEconomyManager();
         this.shopKey = new NamespacedKey(plugin, "shop-id");
+        this.selectableMaterials = Arrays.stream(Material.values())
+                .filter(Material::isItem)
+                .filter(material -> material != Material.AIR)
+                .sorted(Comparator.comparing(Material::name))
+                .toList();
 
         if (!plugin.getDataFolder().exists()) {
             plugin.getDataFolder().mkdirs();
@@ -74,8 +91,20 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
         this.templatesConfig = YamlConfiguration.loadConfiguration(templatesFile);
 
+        this.generalShopFile = new File(plugin.getDataFolder(), "general-shop.yml");
+        if (!generalShopFile.exists()) {
+            try {
+                generalShopFile.getParentFile().mkdirs();
+                generalShopFile.createNewFile();
+            } catch (IOException e) {
+                plugin.getLogger().severe("Impossible de créer general-shop.yml: " + e.getMessage());
+            }
+        }
+        this.generalShopConfig = YamlConfiguration.loadConfiguration(generalShopFile);
+
         loadTemplates();
         loadShops();
+        loadGeneralStore();
     }
 
     private void loadTemplates() {
@@ -194,11 +223,54 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
+    private void loadGeneralStore() {
+        generalListings.clear();
+        ConfigurationSection section = generalShopConfig.getConfigurationSection("listings");
+        if (section == null) {
+            return;
+        }
+        for (String key : section.getKeys(false)) {
+            UUID listingId;
+            try {
+                listingId = UUID.fromString(key);
+            } catch (IllegalArgumentException ex) {
+                plugin.getLogger().warning("ID d'annonce invalide: " + key);
+                continue;
+            }
+            String sellerIdRaw = section.getString(key + ".seller");
+            if (sellerIdRaw == null) {
+                plugin.getLogger().warning("Annonce " + key + " sans vendeur.");
+                continue;
+            }
+            UUID sellerId;
+            try {
+                sellerId = UUID.fromString(sellerIdRaw);
+            } catch (IllegalArgumentException ex) {
+                plugin.getLogger().warning("Vendeur invalide pour l'annonce " + key);
+                continue;
+            }
+            double price = section.getDouble(key + ".price");
+            if (price <= 0) {
+                continue;
+            }
+            ItemStack item = section.getItemStack(key + ".item");
+            if (item == null || item.getType() == Material.AIR) {
+                continue;
+            }
+            String sellerName = section.getString(key + ".seller-name", "Inconnu");
+            generalListings.put(listingId, new GeneralShopListing(listingId, sellerId, sellerName, item, price));
+        }
+    }
+
     private void spawnShopEntity(Shop shop) {
         ShopTemplate template = templates.get(shop.getTemplateKey());
         Villager villager = shop.spawn(template);
         if (villager == null) {
             return;
+        }
+        if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
+            villager.setCustomName(GENERAL_DISPLAY_NAME);
+            villager.setCustomNameVisible(true);
         }
         villager.setVillagerLevel(5);
         PersistentDataContainer data = villager.getPersistentDataContainer();
@@ -260,6 +332,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 return handleRemoveItem(player, args);
             case "reloadtemplates":
                 return handleReload(player);
+            case "setting":
+                return handleSetting(player, args);
             default:
                 player.sendMessage("§cSous-commande inconnue.");
                 sendHelp(player);
@@ -269,16 +343,24 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private void sendHelp(Player player) {
         player.sendMessage("§6Boutique OutlawEco");
-        if (player.hasPermission(PERMISSION_USE) || player.hasPermission(PERMISSION_ADMIN)) {
-            player.sendMessage("§e/shop open <template>§7 - ouvrir une boutique");
+        boolean isAdmin = player.hasPermission(PERMISSION_ADMIN);
+        boolean canUse = isAdmin || player.hasPermission(PERMISSION_USE);
+
+        if (canUse) {
+            player.sendMessage("§e--- Utilisateur ---");
+            player.sendMessage("§e/shop open <template>§7 - ouvrir une boutique PNJ");
+            player.sendMessage("§e/shop open general§7 - ouvrir le magasin général (alias: /shop open shop general)");
         }
-        if (player.hasPermission(PERMISSION_ADMIN)) {
-            player.sendMessage("§e/shop create <template>§7 - créer une boutique PNJ");
+
+        if (isAdmin) {
+            player.sendMessage("§e--- Admin ---");
+            player.sendMessage("§e/shop create <template|general>§7 - créer une boutique PNJ ou le magasin général");
             player.sendMessage("§e/shop remove§7 - supprimer la boutique ciblée");
             player.sendMessage("§e/shop list [templates]§7 - liste des boutiques ou templates");
             player.sendMessage("§e/shop add itemshop <template> <item> <quantité> <prixAchat> [prixVente]§7 - ajouter un objet");
             player.sendMessage("§e/shop removeitem <template> <item>§7 - retirer un objet");
             player.sendMessage("§e/shop reloadtemplates§7 - recharger les templates");
+            player.sendMessage("§e/shop setting price§7 - définir les prix via le menu créatif");
         }
     }
 
@@ -288,10 +370,21 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return true;
         }
         if (args.length < 2) {
-            player.sendMessage("§cMerci de préciser un template: " + String.join(", ", templates.keySet()));
+            player.sendMessage("§cMerci de préciser un template ou 'general'.");
             return true;
         }
-        ShopTemplate template = templates.get(args[1].toLowerCase(Locale.ROOT));
+        String target = args[1].toLowerCase(Locale.ROOT);
+        if (target.equals("shop") && args.length >= 3) {
+            target = args[2].toLowerCase(Locale.ROOT);
+        } else if (target.equals("shop")) {
+            player.sendMessage("§cUsage: /shop open shop general");
+            return true;
+        }
+        if (target.equals("general")) {
+            openGeneralStore(player, 0);
+            return true;
+        }
+        ShopTemplate template = templates.get(target);
         if (template == null) {
             player.sendMessage("§cTemplate introuvable.");
             return true;
@@ -310,6 +403,11 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return true;
         }
         String templateKey = args[1].toLowerCase(Locale.ROOT);
+        if (templateKey.equals(GENERAL_TEMPLATE_KEY)) {
+            createShop(player, templateKey);
+            player.sendMessage("§aNPC du magasin général créé.");
+            return true;
+        }
         ShopTemplate template = templates.get(templateKey);
         if (template == null) {
             player.sendMessage("§cTemplate introuvable.");
@@ -437,16 +535,55 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         return true;
     }
 
+    private boolean handleSetting(Player player, String[] args) {
+        if (!player.hasPermission(PERMISSION_ADMIN)) {
+            player.sendMessage("§cVous n'avez pas la permission.");
+            return true;
+        }
+        if (args.length < 2 || !args[1].equalsIgnoreCase("price")) {
+            player.sendMessage("§cUsage: /shop setting price");
+            return true;
+        }
+        pendingPriceInputs.remove(player.getUniqueId());
+        openPriceSelector(player, 0);
+        player.sendMessage("§7Sélectionnez un objet puis indiquez son prix dans le chat. Tapez 'cancel' pour annuler.");
+        return true;
+    }
+
     private void updateVillagers() {
         for (Shop shop : shops.values()) {
+            Villager villager = shop.getVillager();
+            if (villager == null) {
+                continue;
+            }
+            if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
+                villager.setCustomName(GENERAL_DISPLAY_NAME);
+                villager.setCustomNameVisible(true);
+                continue;
+            }
             ShopTemplate template = templates.get(shop.getTemplateKey());
             if (template == null) {
                 continue;
             }
-            Villager villager = shop.getVillager();
-            if (villager != null) {
-                villager.setCustomName(template.getDisplayName());
-            }
+            villager.setCustomName(template.getDisplayName());
+            villager.setCustomNameVisible(true);
+        }
+    }
+
+    private void saveGeneralStore() {
+        YamlConfiguration config = new YamlConfiguration();
+        for (GeneralShopListing listing : generalListings.values()) {
+            String base = "listings." + listing.getId();
+            config.set(base + ".seller", listing.getSellerId().toString());
+            config.set(base + ".seller-name", listing.getSellerName());
+            config.set(base + ".price", listing.getPrice());
+            config.set(base + ".item", listing.getItem());
+        }
+        try {
+            config.save(generalShopFile);
+            this.generalShopConfig = config;
+        } catch (IOException e) {
+            plugin.getLogger().severe("Impossible d'enregistrer general-shop.yml: " + e.getMessage());
         }
     }
 
@@ -484,7 +621,14 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         for (Shop shop : shops.values()) {
             Location loc = shop.getLocation();
             ShopTemplate template = templates.get(shop.getTemplateKey());
-            String display = template != null ? ChatColor.stripColor(template.getDisplayName()) : shop.getTemplateKey();
+            String display;
+            if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
+                display = ChatColor.stripColor(GENERAL_DISPLAY_NAME);
+            } else if (template != null) {
+                display = ChatColor.stripColor(template.getDisplayName());
+            } else {
+                display = shop.getTemplateKey();
+            }
             player.sendMessage("§e- " + display + " §7@ " + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ());
         }
     }
@@ -588,6 +732,139 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         player.openInventory(inventory);
     }
 
+    private void openPriceSelector(Player player, int page) {
+        if (selectableMaterials.isEmpty()) {
+            player.sendMessage("§cAucun item disponible.");
+            return;
+        }
+        int totalPages = Math.max(1, (int) Math.ceil((double) selectableMaterials.size() / PRICE_PAGE_SIZE));
+        int safePage = Math.max(0, Math.min(page, totalPages - 1));
+        int start = safePage * PRICE_PAGE_SIZE;
+        int end = Math.min(start + PRICE_PAGE_SIZE, selectableMaterials.size());
+        List<Material> pageMaterials = selectableMaterials.subList(start, end);
+
+        ShopInventoryHolder holder = ShopInventoryHolder.forPriceSelector(pageMaterials, safePage, totalPages);
+        Inventory inventory = Bukkit.createInventory(holder, 54,
+                "§ePrix des items (" + (safePage + 1) + "/" + totalPages + ")");
+
+        for (int i = 0; i < pageMaterials.size(); i++) {
+            Material material = pageMaterials.get(i);
+            ItemStack item = new ItemStack(material);
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) {
+                List<String> lore = new ArrayList<>();
+                OptionalDouble price = findCurrentBuyPrice(material);
+                if (price.isPresent()) {
+                    lore.add("§7Prix actuel: §e" + String.format(Locale.US, "%.2f", price.getAsDouble()));
+                } else {
+                    lore.add("§7Aucun prix défini dans les templates");
+                }
+                lore.add("§eClique pour définir un prix");
+                meta.setLore(lore);
+                item.setItemMeta(meta);
+            }
+            inventory.setItem(i, item);
+        }
+
+        if (safePage > 0) {
+            ItemStack previous = new ItemStack(Material.ARROW);
+            ItemMeta meta = previous.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§ePage précédente");
+                previous.setItemMeta(meta);
+            }
+            inventory.setItem(45, previous);
+        }
+        if (safePage < totalPages - 1) {
+            ItemStack next = new ItemStack(Material.ARROW);
+            ItemMeta meta = next.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§ePage suivante");
+                next.setItemMeta(meta);
+            }
+            inventory.setItem(53, next);
+        }
+
+        ItemStack info = new ItemStack(Material.NAME_TAG);
+        ItemMeta infoMeta = info.getItemMeta();
+        if (infoMeta != null) {
+            infoMeta.setDisplayName("§fDéfinir un prix");
+            infoMeta.setLore(List.of(
+                    "§7Cliquez sur un item pour choisir",
+                    "§7puis entrez le prix dans le chat.",
+                    "§7Tapez 'cancel' pour annuler."));
+            info.setItemMeta(infoMeta);
+        }
+        inventory.setItem(49, info);
+
+        player.openInventory(inventory);
+    }
+
+    private void openGeneralStore(Player player, int page) {
+        List<GeneralShopListing> allListings = new ArrayList<>(generalListings.values());
+        int totalPages = Math.max(1, (int) Math.ceil((double) allListings.size() / GENERAL_PAGE_SIZE));
+        int safePage = Math.max(0, Math.min(page, totalPages - 1));
+        int start = safePage * GENERAL_PAGE_SIZE;
+        int end = Math.min(start + GENERAL_PAGE_SIZE, allListings.size());
+        List<GeneralShopListing> pageListings = allListings.subList(start, end);
+
+        ShopInventoryHolder holder = ShopInventoryHolder.forGeneralStore(pageListings, safePage, totalPages);
+        Inventory inventory = Bukkit.createInventory(holder, 54,
+                "§2Magasin général (" + (safePage + 1) + "/" + totalPages + ")");
+
+        for (int i = 0; i < pageListings.size(); i++) {
+            GeneralShopListing listing = pageListings.get(i);
+            ItemStack item = listing.getItem();
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) {
+                List<String> lore = new ArrayList<>();
+                lore.add("§7Vendeur: §f" + listing.getSellerName());
+                lore.add("§aPrix: §e" + String.format(Locale.US, "%.2f", listing.getPrice()));
+                if (listing.getSellerId().equals(player.getUniqueId())) {
+                    lore.add("§7Clique pour récupérer l'objet");
+                } else {
+                    lore.add("§7Clique pour acheter");
+                }
+                meta.setLore(lore);
+                item.setItemMeta(meta);
+            }
+            inventory.setItem(i, item);
+        }
+
+        if (safePage > 0) {
+            ItemStack previous = new ItemStack(Material.ARROW);
+            ItemMeta meta = previous.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§ePage précédente");
+                previous.setItemMeta(meta);
+            }
+            inventory.setItem(45, previous);
+        }
+        if (safePage < totalPages - 1) {
+            ItemStack next = new ItemStack(Material.ARROW);
+            ItemMeta meta = next.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§ePage suivante");
+                next.setItemMeta(meta);
+            }
+            inventory.setItem(53, next);
+        }
+
+        ItemStack add = new ItemStack(Material.EMERALD);
+        ItemMeta addMeta = add.getItemMeta();
+        if (addMeta != null) {
+            addMeta.setDisplayName("§aMettre en vente l'objet en main");
+            addMeta.setLore(List.of(
+                    "§7Retire la pile tenue en main.",
+                    "§7Entrez ensuite le prix dans le chat.",
+                    "§7Tapez 'cancel' pour annuler."));
+            add.setItemMeta(addMeta);
+        }
+        inventory.setItem(49, add);
+
+        player.openInventory(inventory);
+    }
+
     private int calculateInventorySize(int contentCount) {
         return 54;
     }
@@ -607,6 +884,10 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         Player player = event.getPlayer();
         if (!player.hasPermission(PERMISSION_USE) && !player.hasPermission(PERMISSION_ADMIN)) {
             player.sendMessage("§cVous n'avez pas la permission d'utiliser cette boutique.");
+            return;
+        }
+        if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
+            openGeneralStore(player, 0);
             return;
         }
         ShopTemplate template = templates.get(shop.getTemplateKey());
@@ -630,16 +911,13 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         if (slot >= event.getView().getTopInventory().getSize()) {
             return;
         }
-        ItemStack current = event.getCurrentItem();
-        if (current == null || current.getType() == Material.AIR) {
-            return;
-        }
-        ShopTemplate template = templates.get(holder.getTemplateKey());
-        if (template == null) {
-            player.closeInventory();
-            return;
-        }
-        if (holder.getType() == ShopInventoryType.CATEGORIES) {
+        ShopInventoryType type = holder.getType();
+        if (type == ShopInventoryType.CATEGORIES) {
+            ShopTemplate template = templates.get(holder.getTemplateKey());
+            if (template == null) {
+                player.closeInventory();
+                return;
+            }
             List<ShopCategory> categories = holder.getCategories();
             if (slot >= categories.size()) {
                 return;
@@ -648,19 +926,78 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             openOffersInventory(player, template, category, true);
             return;
         }
-        if (holder.hasBackButton() && slot == event.getInventory().getSize() - 1) {
-            openCategorySelection(player, template);
+
+        if (type == ShopInventoryType.OFFERS) {
+            ShopTemplate template = templates.get(holder.getTemplateKey());
+            if (template == null) {
+                player.closeInventory();
+                return;
+            }
+            if (holder.hasBackButton() && slot == event.getInventory().getSize() - 1) {
+                openCategorySelection(player, template);
+                return;
+            }
+            ItemStack current = event.getCurrentItem();
+            if (current == null || current.getType() == Material.AIR) {
+                return;
+            }
+            List<ShopOffer> offers = holder.getOffers();
+            if (slot >= offers.size()) {
+                return;
+            }
+            ShopOffer offer = offers.get(slot);
+            if (event.isLeftClick()) {
+                handleBuy(player, offer);
+            } else if (event.isRightClick()) {
+                handleSell(player, offer);
+            }
             return;
         }
-        List<ShopOffer> offers = holder.getOffers();
-        if (slot >= offers.size()) {
+
+        if (type == ShopInventoryType.PRICE_SELECTOR) {
+            if (slot == 45 && holder.getPage() > 0) {
+                openPriceSelector(player, holder.getPage() - 1);
+                return;
+            }
+            if (slot == 53 && holder.getPage() < holder.getTotalPages() - 1) {
+                openPriceSelector(player, holder.getPage() + 1);
+                return;
+            }
+            if (slot >= holder.getMaterials().size()) {
+                return;
+            }
+            ItemStack current = event.getCurrentItem();
+            if (current == null || current.getType() == Material.AIR) {
+                return;
+            }
+            Material material = holder.getMaterials().get(slot);
+            player.closeInventory();
+            pendingPriceInputs.put(player.getUniqueId(), new PendingPriceInput(material, holder.getPage()));
+            player.sendMessage("§eEntrez le prix pour §6" + formatMaterialName(material) + "§e dans le chat (ou 'cancel').");
             return;
         }
-        ShopOffer offer = offers.get(slot);
-        if (event.isLeftClick()) {
-            handleBuy(player, offer);
-        } else if (event.isRightClick()) {
-            handleSell(player, offer);
+
+        if (type == ShopInventoryType.GENERAL_STORE) {
+            if (slot == 45 && holder.getPage() > 0) {
+                openGeneralStore(player, holder.getPage() - 1);
+                return;
+            }
+            if (slot == 53 && holder.getPage() < holder.getTotalPages() - 1) {
+                openGeneralStore(player, holder.getPage() + 1);
+                return;
+            }
+            if (slot == 49) {
+                handleStartListing(player, holder.getPage());
+                return;
+            }
+            if (slot >= holder.getGeneralListings().size()) {
+                return;
+            }
+            ItemStack current = event.getCurrentItem();
+            if (current == null || current.getType() == Material.AIR) {
+                return;
+            }
+            handleListingInteraction(player, holder.getGeneralListings().get(slot), holder.getPage());
         }
     }
 
@@ -719,12 +1056,233 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         inventory.setContents(contents);
     }
 
+    private void handleStartListing(Player player, int page) {
+        ItemStack inHand = player.getInventory().getItemInMainHand();
+        if (inHand == null || inHand.getType() == Material.AIR) {
+            player.sendMessage("§cTenez l'objet à vendre dans votre main.");
+            return;
+        }
+        PendingListingInput existing = pendingListingInputs.remove(player.getUniqueId());
+        if (existing != null) {
+            giveItemBack(player, existing.item());
+        }
+        ItemStack item = inHand.clone();
+        player.getInventory().setItemInMainHand(null);
+        player.updateInventory();
+        pendingListingInputs.put(player.getUniqueId(), new PendingListingInput(item, page));
+        player.closeInventory();
+        player.sendMessage("§eEntrez le prix pour §6" + describeItem(item) + "§e dans le chat (ou 'cancel').");
+    }
+
+    private void handleListingInteraction(Player player, GeneralShopListing listing, int currentPage) {
+        GeneralShopListing current = generalListings.get(listing.getId());
+        if (current == null) {
+            player.sendMessage("§cCette annonce n'est plus disponible.");
+            openGeneralStore(player, normalizeGeneralPage(currentPage));
+            return;
+        }
+        if (current.getSellerId().equals(player.getUniqueId())) {
+            generalListings.remove(current.getId());
+            saveGeneralStore();
+            ItemStack item = current.getItem();
+            giveItemBack(player, item);
+            player.sendMessage("§aAnnonce retirée. L'objet vous a été rendu.");
+            openGeneralStore(player, normalizeGeneralPage(currentPage));
+            return;
+        }
+        double price = current.getPrice();
+        if (!economyManager.withdraw(player.getUniqueId(), price)) {
+            player.sendMessage("§cPas assez d'argent.");
+            return;
+        }
+        ItemStack item = current.getItem();
+        HashMap<Integer, ItemStack> leftovers = player.getInventory().addItem(item);
+        if (!leftovers.isEmpty()) {
+            leftovers.values().forEach(remain -> player.getWorld().dropItemNaturally(player.getLocation(), remain));
+        }
+        economyManager.deposit(current.getSellerId(), price);
+        generalListings.remove(current.getId());
+        saveGeneralStore();
+        String itemName = describeItem(item);
+        player.sendMessage("§aAchat effectué pour §e" + formatPrice(price));
+        Player seller = Bukkit.getPlayer(current.getSellerId());
+        if (seller != null && seller.isOnline()) {
+            seller.sendMessage("§aVotre annonce pour §6" + itemName + "§a a été vendue pour §e" + formatPrice(price) + "§a.");
+        }
+        openGeneralStore(player, normalizeGeneralPage(currentPage));
+    }
+
+    private int normalizeGeneralPage(int requestedPage) {
+        int totalPages = Math.max(1, (int) Math.ceil((double) generalListings.size() / GENERAL_PAGE_SIZE));
+        return Math.max(0, Math.min(requestedPage, totalPages - 1));
+    }
+
+    private void giveItemBack(Player player, ItemStack item) {
+        if (item == null || item.getType() == Material.AIR) {
+            return;
+        }
+        Map<Integer, ItemStack> leftovers = player.getInventory().addItem(item);
+        if (!leftovers.isEmpty()) {
+            leftovers.values().forEach(remain -> player.getWorld().dropItemNaturally(player.getLocation(), remain));
+        }
+        player.updateInventory();
+    }
+
+    private String describeItem(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        String base = formatMaterialName(item.getType());
+        if (meta != null && meta.hasDisplayName()) {
+            base = ChatColor.stripColor(meta.getDisplayName());
+        }
+        return base + " x" + item.getAmount();
+    }
+
+    private String formatMaterialName(Material material) {
+        String lower = material.name().toLowerCase(Locale.ROOT);
+        return Arrays.stream(lower.split("_"))
+                .filter(part -> !part.isBlank())
+                .map(part -> Character.toUpperCase(part.charAt(0)) + part.substring(1))
+                .collect(Collectors.joining(" "));
+    }
+
+    private String formatPrice(double price) {
+        return String.format(Locale.US, "%.2f", price);
+    }
+
+    private boolean isCancelMessage(String message) {
+        return message.equalsIgnoreCase("cancel") || message.equalsIgnoreCase("annuler");
+    }
+
+    private OptionalDouble findCurrentBuyPrice(Material material) {
+        for (ShopTemplate template : templates.values()) {
+            OptionalDouble found = template.findBuyPrice(material);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return OptionalDouble.empty();
+    }
+
+    private int updateMaterialBuyPrice(Material material, double price) {
+        int updated = 0;
+        for (ShopTemplate template : templates.values()) {
+            updated += template.updateBuyPrice(material, price);
+        }
+        return updated;
+    }
+
+    private void handlePendingPriceChat(Player player, UUID uuid, PendingPriceInput pending, String message) {
+        if (isCancelMessage(message)) {
+            pendingPriceInputs.remove(uuid);
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                player.sendMessage("§eDéfinition du prix annulée.");
+                openPriceSelector(player, pending.page());
+            });
+            return;
+        }
+        double value;
+        try {
+            value = Double.parseDouble(message.replace(',', '.'));
+        } catch (NumberFormatException ex) {
+            Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage("§cValeur invalide. Entrez un nombre."));
+            return;
+        }
+        if (value <= 0) {
+            Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage("§cLe prix doit être supérieur à 0."));
+            return;
+        }
+        pendingPriceInputs.remove(uuid);
+        double price = value;
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            int updated = updateMaterialBuyPrice(pending.material(), price);
+            if (updated <= 0) {
+                player.sendMessage("§cAucun template ne contient cet objet. Aucun prix mis à jour.");
+                openPriceSelector(player, pending.page());
+                return;
+            }
+            saveTemplates();
+            player.sendMessage("§aPrix défini pour §6" + formatMaterialName(pending.material()) + "§a: §e" + formatPrice(price)
+                    + " §7(" + updated + " offre" + (updated > 1 ? "s" : "") + ")");
+            openPriceSelector(player, pending.page());
+        });
+    }
+
+    private void handlePendingListingChat(Player player, UUID uuid, PendingListingInput pending, String message) {
+        if (isCancelMessage(message)) {
+            PendingListingInput removed = pendingListingInputs.remove(uuid);
+            if (removed != null) {
+                ItemStack item = removed.item();
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    giveItemBack(player, item);
+                    player.sendMessage("§eMise en vente annulée. L'objet a été rendu.");
+                    openGeneralStore(player, normalizeGeneralPage(removed.page()));
+                });
+            }
+            return;
+        }
+        double value;
+        try {
+            value = Double.parseDouble(message.replace(',', '.'));
+        } catch (NumberFormatException ex) {
+            Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage("§cValeur invalide. Entrez un nombre."));
+            return;
+        }
+        if (value <= 0) {
+            Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage("§cLe prix doit être supérieur à 0."));
+            return;
+        }
+        PendingListingInput removed = pendingListingInputs.remove(uuid);
+        if (removed == null) {
+            return;
+        }
+        double price = value;
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            ItemStack item = removed.item();
+            UUID listingId = UUID.randomUUID();
+            GeneralShopListing listing = new GeneralShopListing(listingId, uuid, player.getName(), item, price);
+            generalListings.put(listingId, listing);
+            saveGeneralStore();
+            player.sendMessage("§aObjet mis en vente pour §e" + formatPrice(price) + "§a.");
+            openGeneralStore(player, normalizeGeneralPage(removed.page()));
+        });
+    }
+
     @EventHandler
     public void onShopDamage(EntityDamageEvent event) {
         UUID shopId = getShopId(event.getEntity());
         if (shopId != null) {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onChat(AsyncPlayerChatEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        PendingPriceInput pricePending = pendingPriceInputs.get(uuid);
+        PendingListingInput listingPending = pendingListingInputs.get(uuid);
+        if (pricePending == null && listingPending == null) {
+            return;
+        }
+        event.setCancelled(true);
+        String message = event.getMessage().trim();
+        if (pricePending != null) {
+            handlePendingPriceChat(player, uuid, pricePending, message);
+            return;
+        }
+        if (listingPending != null) {
+            handlePendingListingChat(player, uuid, listingPending, message);
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+        PendingListingInput listing = pendingListingInputs.remove(uuid);
+        if (listing != null) {
+            giveItemBack(event.getPlayer(), listing.item());
+        }
+        pendingPriceInputs.remove(uuid);
     }
 
     @Override
@@ -741,7 +1299,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 subcommands.add("open");
             }
             if (isAdmin) {
-                subcommands.addAll(Arrays.asList("create", "remove", "list", "add", "removeitem", "reloadtemplates"));
+                subcommands.addAll(Arrays.asList("create", "remove", "list", "add", "removeitem", "reloadtemplates", "setting"));
             }
             return subcommands.stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT)))
@@ -750,9 +1308,17 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("open") && canUse) {
-                return filterByPrefix(templates.keySet(), args[1]);
+                List<String> options = new ArrayList<>(templates.keySet());
+                options.add("general");
+                options.add("shop");
+                return filterByPrefix(options, args[1]);
             }
-            if (isAdmin && (args[0].equalsIgnoreCase("create") || args[0].equalsIgnoreCase("removeitem"))) {
+            if (isAdmin && args[0].equalsIgnoreCase("create")) {
+                List<String> options = new ArrayList<>(templates.keySet());
+                options.add(GENERAL_TEMPLATE_KEY);
+                return filterByPrefix(options, args[1]);
+            }
+            if (isAdmin && args[0].equalsIgnoreCase("removeitem")) {
                 return filterByPrefix(templates.keySet(), args[1]);
             }
             if (isAdmin && args[0].equalsIgnoreCase("list")) {
@@ -761,11 +1327,17 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             if (isAdmin && args[0].equalsIgnoreCase("add")) {
                 return filterByPrefix(List.of("itemshop"), args[1]);
             }
+            if (isAdmin && args[0].equalsIgnoreCase("setting")) {
+                return filterByPrefix(List.of("price"), args[1]);
+            }
         }
 
-        if (args.length == 3 && isAdmin) {
-            if (args[0].equalsIgnoreCase("add") && args[1].equalsIgnoreCase("itemshop")) {
+        if (args.length == 3) {
+            if (isAdmin && args[0].equalsIgnoreCase("add") && args[1].equalsIgnoreCase("itemshop")) {
                 return filterByPrefix(templates.keySet(), args[2]);
+            }
+            if (args[0].equalsIgnoreCase("open") && canUse && args[1].equalsIgnoreCase("shop")) {
+                return filterByPrefix(List.of("general"), args[2]);
             }
         }
 
@@ -778,6 +1350,19 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 .filter(value -> value.toLowerCase(Locale.ROOT).startsWith(lower))
                 .sorted()
                 .collect(Collectors.toList());
+    }
+
+    public void shutdown() {
+        saveGeneralStore();
+    }
+
+    private record PendingPriceInput(Material material, int page) {
+    }
+
+    private record PendingListingInput(ItemStack item, int page) {
+        private PendingListingInput {
+            item = Objects.requireNonNull(item, "item").clone();
+        }
     }
 
     private void saveTemplates() {

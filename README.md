@@ -6,6 +6,7 @@ Plugin Paper/Spigot pour offrir un système d'économie centralisé avec boutiqu
 - Système d'argent persistant avec solde de départ configurable.
 - Commandes `/balance`, `/pay`, `/trade`, `/shop`.
 - Boutiques NPC pour vendre et acheter des items (outils, blocs, nourriture).
+- Magasin général commun où les joueurs peuvent vendre leurs objets, 30 annonces par page et paiement direct au vendeur.
 - Échanges joueur à joueur avec interface dédiée permettant d'offrir items et argent.
 - API publique pour que vos autres plugins (Clans, territoires, etc.) puissent manipuler l'argent.
 
@@ -15,14 +16,30 @@ Plugin Paper/Spigot pour offrir un système d'économie centralisé avec boutiqu
 3. Démarrer le serveur afin de générer les fichiers de configuration (`config.yml`, `balances.yml`, `shops.yml`).
 
 ## Commandes
+
+### Sans permission (tous les joueurs)
 | Commande | Description |
 | --- | --- |
 | `/balance` | Affiche le solde du joueur. |
 | `/pay <joueur> <montant>` | Transfert d'argent entre joueurs. |
 | `/trade <joueur>` | Envoie une demande d'échange. Sous-commandes : `accept`, `deny`, `cancel`. |
-| `/shop create <type>` | Crée une boutique NPC (admin). Types disponibles : `tools`, `blocks`, `food`. |
+
+### Joueurs avec la permission `outlaweco.use`
+| Commande | Description |
+| --- | --- |
+| `/shop open <template>` | Ouvre une boutique PNJ à partir d'un template configuré. |
+| `/shop open general` | Ouvre le magasin général commun (alias : `/shop open shop general`). |
+
+### Administrateurs (`outlawecoadmin`)
+| Commande | Description |
+| --- | --- |
+| `/shop create <template ou general>` | Crée une boutique PNJ ou place le NPC du magasin général. |
 | `/shop remove` | Supprime la boutique ciblée. |
-| `/shop list` | Liste toutes les boutiques enregistrées. |
+| `/shop list [templates]` | Liste les boutiques créées ou les templates disponibles. |
+| `/shop add itemshop <template> <item> <quantité> <prixAchat> [prixVente]` | Ajoute un objet à un template simple. |
+| `/shop removeitem <template> <item>` | Retire un objet d'un template simple. |
+| `/shop reloadtemplates` | Recharge les templates depuis le fichier YAML. |
+| `/shop setting price` | Ouvre le menu de définition des prix pour les items et met à jour `shop-templates.yml`. |
 
 ## Configuration (`config.yml`)
 ```yaml
@@ -72,7 +89,7 @@ Assurez-vous que votre plugin déclare une dépendance vers OutlawEconomy (via `
 
 ## Création de boutiques NPC
 - Les boutiques sont basées sur des villageois invulnérables.
-- Effectuez `/shop create <type>` à l'endroit souhaité pour placer le NPC.
+- Effectuez `/shop create <type>` à l'endroit souhaité pour placer le NPC (`general` pour le magasin commun).
 - Les joueurs interagissent avec le NPC pour ouvrir le menu d'achat/vente. Clic gauche = achat, clic droit = vente.
 - Les boutiques sont sauvegardées dans `plugins/OutlawEconomy/shops.yml`.
 
