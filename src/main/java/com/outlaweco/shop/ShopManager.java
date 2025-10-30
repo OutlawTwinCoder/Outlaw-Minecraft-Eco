@@ -589,11 +589,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     }
 
     private int calculateInventorySize(int contentCount) {
-        int size = 9;
-        while (size < contentCount && size < 54) {
-            size += 9;
-        }
-        return size;
+        return 54;
     }
 
     @EventHandler
