@@ -11,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
+import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -207,14 +208,7 @@ public class EconomyManager implements EconomyService, Listener {
         if (objective == null) {
             return;
         }
-        try {
-            Class<?> numberFormatClass = Class.forName("org.bukkit.scoreboard.NumberFormat");
-            Object blankFormat = numberFormatClass.getMethod("blank").invoke(null);
-            objective.getClass().getMethod("setNumberFormat", numberFormatClass).invoke(objective, blankFormat);
-        } catch (ClassNotFoundException ignored) {
-            // API level does not support number formatting; ignore so we stay compatible with older servers.
-        } catch (ReflectiveOperationException e) {
-            plugin.getLogger().fine("Impossible d'appliquer le format de numéro vierge : " + e.getMessage());
-        }
+
+        objective.numberFormat(NumberFormat.blank());
     }
 }
