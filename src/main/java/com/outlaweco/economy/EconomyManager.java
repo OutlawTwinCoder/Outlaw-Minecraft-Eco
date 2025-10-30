@@ -160,12 +160,8 @@ public class EconomyManager implements EconomyService, Listener {
 
         if (current == null || current == manager.getMainScoreboard() || objective == null) {
             Scoreboard scoreboard = manager.getNewScoreboard();
-            Objective newObjective = scoreboard.registerNewObjective(SCOREBOARD_OBJECTIVE, "dummy", ChatColor.GOLD + "Économie");
+            Objective newObjective = scoreboard.registerNewObjective(SCOREBOARD_OBJECTIVE, "dummy", ChatColor.GOLD + "Argent");
             newObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-            // Add a label line and spacer to keep layout stable.
-            newObjective.getScore(ChatColor.YELLOW + "Solde").setScore(3);
-            newObjective.getScore(ChatColor.DARK_GRAY.toString()).setScore(2);
 
             Team balanceTeam = scoreboard.registerNewTeam(BALANCE_TEAM);
             balanceTeam.addEntry(BALANCE_ENTRY);
@@ -197,6 +193,6 @@ public class EconomyManager implements EconomyService, Listener {
                 playerId,
                 id -> plugin.getConfig().getDouble("economy.starting-balance", 0)
         );
-        team.setPrefix(ChatColor.GREEN + decimalFormat.format(balance));
+        team.setPrefix(ChatColor.GREEN + decimalFormat.format(balance) + "$");
     }
 }
