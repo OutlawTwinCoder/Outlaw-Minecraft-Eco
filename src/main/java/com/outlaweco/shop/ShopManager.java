@@ -14,6 +14,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
@@ -110,7 +111,18 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private void loadTemplates() {
         templates.clear();
 
-        this.templatesConfig = YamlConfiguration.loadConfiguration(templatesFile);
+        boolean parseFailed = false;
+        YamlConfiguration freshConfig = new YamlConfiguration();
+        try {
+            freshConfig.load(templatesFile);
+        } catch (IOException e) {
+            plugin.getLogger().warning("Impossible de lire shop-templates.yml: " + e.getMessage());
+        } catch (InvalidConfigurationException e) {
+            plugin.getLogger().severe("shop-templates.yml est invalide et n'a pas pu être chargé: " + e.getMessage());
+            parseFailed = true;
+        }
+        this.templatesConfig = freshConfig;
+
         ConfigurationSection userRoot = templatesConfig.getConfigurationSection("templates");
         populateTemplates(userRoot, true);
 
@@ -127,7 +139,11 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 plugin.getLogger().warning("Impossible de lire les templates par défaut: " + e.getMessage());
             }
             if (loadedDefaults) {
-                plugin.getLogger().warning("Aucun template personnalisé détecté, utilisation des templates par défaut inclus dans le plugin.");
+                if (parseFailed) {
+                    plugin.getLogger().warning("Erreur de syntaxe dans shop-templates.yml, utilisation des templates par défaut du plugin.");
+                } else {
+                    plugin.getLogger().warning("Aucun template personnalisé détecté, utilisation des templates par défaut inclus dans le plugin.");
+                }
             }
         }
 

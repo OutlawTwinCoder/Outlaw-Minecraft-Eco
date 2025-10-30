@@ -828,10 +828,10 @@ templates:
             amount: 16
             buy-price: 80
             sell-price: 48
-        - item: BLACK_CANDLE
-          amount: 16
-          buy-price: 80
-          sell-price: 48
+          - item: BLACK_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
   construction:
     display-name: '&eBoutique Construction'
     icon: BRICKS
