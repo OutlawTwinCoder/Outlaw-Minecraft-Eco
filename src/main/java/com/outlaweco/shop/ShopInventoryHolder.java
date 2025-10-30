@@ -10,19 +10,49 @@ import java.util.Optional;
 public class ShopInventoryHolder implements InventoryHolder {
 
     private final String templateKey;
+    private final String categoryKey;
+    private final String categoryDisplayName;
+    private final int categoryIndex;
+    private final int totalCategories;
     private final Map<Integer, ShopOffer> offerSlots = new HashMap<>();
-    private final Map<Integer, String> tabTargets = new HashMap<>();
+    private final Map<Integer, Integer> categoryTargets = new HashMap<>();
     private final int page;
     private final int totalPages;
 
-    public ShopInventoryHolder(String templateKey, int page, int totalPages) {
+    public ShopInventoryHolder(String templateKey,
+                               String categoryKey,
+                               String categoryDisplayName,
+                               int categoryIndex,
+                               int totalCategories,
+                               int page,
+                               int totalPages) {
         this.templateKey = templateKey;
+        this.categoryKey = categoryKey;
+        this.categoryDisplayName = categoryDisplayName;
+        this.categoryIndex = categoryIndex;
+        this.totalCategories = totalCategories;
         this.page = page;
         this.totalPages = totalPages;
     }
 
     public String getTemplateKey() {
         return templateKey;
+    }
+
+    public String getCategoryKey() {
+        return categoryKey;
+    }
+
+    public String getCategoryDisplayName() {
+        return categoryDisplayName;
+    }
+
+    public int getCategoryIndex() {
+        return categoryIndex;
+    }
+
+    public int getTotalCategories() {
+        return totalCategories;
     }
 
     public int getPage() {
@@ -41,12 +71,12 @@ public class ShopInventoryHolder implements InventoryHolder {
         return offerSlots.get(slot);
     }
 
-    public void registerTabSlot(int slot, String template) {
-        tabTargets.put(slot, template);
+    public void registerCategorySlot(int slot, int categoryIndex) {
+        categoryTargets.put(slot, categoryIndex);
     }
 
-    public Optional<String> getTabTarget(int slot) {
-        return Optional.ofNullable(tabTargets.get(slot));
+    public Optional<Integer> getCategoryTarget(int slot) {
+        return Optional.ofNullable(categoryTargets.get(slot));
     }
 
     @Override

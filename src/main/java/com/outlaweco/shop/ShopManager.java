@@ -120,26 +120,39 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 }
             }
 
-            List<Map<?, ?>> items = section.getMapList("items");
-            List<ShopOffer> offers = new ArrayList<>();
-            for (Map<?, ?> entry : items) {
-                String materialName = Objects.toString(entry.get("item"), "");
-                Material material = Material.matchMaterial(materialName);
-                if (material == null) {
-                    plugin.getLogger().warning("Matériau invalide '" + materialName + "' pour le template " + key);
-                    continue;
-                }
-                int amount = 1;
-                Object amountObj = entry.get("amount");
-                if (amountObj instanceof Number number) {
-                    amount = Math.max(1, number.intValue());
-                }
-                double buyPrice = getDouble(entry.get("buy-price"), 0.0);
-                double sellPrice = getDouble(entry.get("sell-price"), 0.0);
-                ItemStack stack = new ItemStack(material, amount);
-                offers.add(new ShopOffer(stack, buyPrice, sellPrice));
+            List<ShopCategory> categories = new ArrayList<>();
+
+            List<Map<?, ?>> rootItems = section.getMapList("items");
+            if (rootItems != null && !rootItems.isEmpty()) {
+                ShopCategory defaultCategory = new ShopCategory("default", null);
+                defaultCategory.setOffers(parseOffers(key, "default", rootItems));
+                categories.add(defaultCategory);
             }
-            template.setOffers(offers);
+
+            ConfigurationSection categoriesSection = section.getConfigurationSection("categories");
+            if (categoriesSection != null) {
+                for (String categoryKey : categoriesSection.getKeys(false)) {
+                    ConfigurationSection categorySection = categoriesSection.getConfigurationSection(categoryKey);
+                    if (categorySection == null) {
+                        continue;
+                    }
+                    ShopCategory category = new ShopCategory(categoryKey, categorySection.getString("display-name"));
+                    String categoryIconName = categorySection.getString("icon");
+                    if (categoryIconName != null && !categoryIconName.isBlank()) {
+                        Material categoryIcon = Material.matchMaterial(categoryIconName);
+                        if (categoryIcon != null) {
+                            category.setIcon(categoryIcon, categoryIconName);
+                        } else {
+                            plugin.getLogger().warning("Icône invalide '" + categoryIconName + "' pour la catégorie " + categoryKey + " du template " + key);
+                        }
+                    }
+                    List<Map<?, ?>> categoryItems = categorySection.getMapList("items");
+                    category.setOffers(parseOffers(key, categoryKey, categoryItems));
+                    categories.add(category);
+                }
+            }
+
+            template.setCategories(categories);
             templates.put(template.getKey(), template);
         }
     }
@@ -153,6 +166,32 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         } catch (NumberFormatException ex) {
             return def;
         }
+    }
+
+    private List<ShopOffer> parseOffers(String templateKey, String categoryKey, List<Map<?, ?>> items) {
+        List<ShopOffer> offers = new ArrayList<>();
+        if (items == null) {
+            return offers;
+        }
+        String context = categoryKey != null ? " (catégorie " + categoryKey + ")" : "";
+        for (Map<?, ?> entry : items) {
+            String materialName = Objects.toString(entry.get("item"), "");
+            Material material = Material.matchMaterial(materialName);
+            if (material == null) {
+                plugin.getLogger().warning("Matériau invalide '" + materialName + "' pour le template " + templateKey + context);
+                continue;
+            }
+            int amount = 1;
+            Object amountObj = entry.get("amount");
+            if (amountObj instanceof Number number) {
+                amount = Math.max(1, number.intValue());
+            }
+            double buyPrice = getDouble(entry.get("buy-price"), 0.0);
+            double sellPrice = getDouble(entry.get("sell-price"), 0.0);
+            ItemStack stack = new ItemStack(material, amount);
+            offers.add(new ShopOffer(stack, buyPrice, sellPrice));
+        }
+        return offers;
     }
 
     private void loadShops() {
@@ -500,11 +539,27 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     }
 
     private void openTemplate(Player player, ShopTemplate template) {
-        openTemplate(player, template, 0);
+        openTemplate(player, template, 0, 0);
     }
 
-    private void openTemplate(Player player, ShopTemplate template, int page) {
-        List<ShopOffer> offers = template.getOffers();
+    private void openTemplate(Player player, ShopTemplate template, int categoryIndex) {
+        openTemplate(player, template, categoryIndex, 0);
+    }
+
+    private void openTemplate(Player player, ShopTemplate template, int categoryIndex, int page) {
+        List<ShopCategory> categories = template.getCategories();
+        if (categories.isEmpty()) {
+            player.sendMessage("§cAucune catégorie disponible pour cette boutique.");
+            return;
+        }
+
+        if (categoryIndex < 0 || categoryIndex >= categories.size()) {
+            categoryIndex = 0;
+        }
+
+        ShopCategory category = categories.get(categoryIndex);
+        List<ShopOffer> offers = category.getOffers();
+
         int maxItemsPerPage = OFFER_SLOTS.length;
         int totalPages = Math.max(1, (int) Math.ceil(offers.size() / (double) maxItemsPerPage));
         if (page < 0) {
@@ -513,7 +568,15 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             page = totalPages - 1;
         }
 
-        ShopInventoryHolder holder = new ShopInventoryHolder(template.getKey(), page, totalPages);
+        ShopInventoryHolder holder = new ShopInventoryHolder(
+                template.getKey(),
+                category.getKey(),
+                category.getDisplayName(),
+                categoryIndex,
+                categories.size(),
+                page,
+                totalPages
+        );
         Inventory inventory = Bukkit.createInventory(holder, INVENTORY_SIZE, template.getDisplayName());
 
         int startIndex = page * maxItemsPerPage;
@@ -529,8 +592,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             holder.registerOfferSlot(slot, offer);
         }
 
-        populateTabs(holder, inventory, template);
-        populateNavigation(holder, inventory);
+        populateCategoryTabs(holder, inventory, categories, categoryIndex);
+        populateNavigation(holder, inventory, category);
 
         player.openInventory(inventory);
     }
@@ -554,38 +617,37 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         return item;
     }
 
-    private void populateTabs(ShopInventoryHolder holder, Inventory inventory, ShopTemplate current) {
+    private void populateCategoryTabs(ShopInventoryHolder holder, Inventory inventory, List<ShopCategory> categories, int activeIndex) {
         int index = 0;
-        for (ShopTemplate template : templates.values()) {
+        for (ShopCategory category : categories) {
             if (index >= TAB_SLOTS.length) {
                 break;
             }
-            int slot = TAB_SLOTS[index++];
-            ItemStack icon = new ItemStack(template.getIcon());
+            int slot = TAB_SLOTS[index];
+            ItemStack icon = new ItemStack(category.getIcon());
             ItemMeta meta = icon.getItemMeta();
             if (meta != null) {
-                meta.setDisplayName(template.getDisplayName());
+                meta.setDisplayName(category.getDisplayName());
                 List<String> lore = new ArrayList<>();
                 lore.add("§7Clique pour ouvrir");
-                if (template == current) {
+                if (index == activeIndex) {
                     lore.add("§a(onglet actuel)");
-                }
-                meta.setLore(lore);
-                if (template == current) {
                     meta.addEnchant(Enchantment.ARROW_INFINITE, 1, true);
                     meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
                 }
+                meta.setLore(lore);
                 icon.setItemMeta(meta);
             }
             inventory.setItem(slot, icon);
-            holder.registerTabSlot(slot, template.getKey());
+            holder.registerCategorySlot(slot, index);
+            index++;
         }
         while (index < TAB_SLOTS.length) {
             inventory.setItem(TAB_SLOTS[index++], createFiller());
         }
     }
 
-    private void populateNavigation(ShopInventoryHolder holder, Inventory inventory) {
+    private void populateNavigation(ShopInventoryHolder holder, Inventory inventory, ShopCategory category) {
         for (int slot = 45; slot < 54; slot++) {
             inventory.setItem(slot, createFiller());
         }
@@ -601,6 +663,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
 
         inventory.setItem(50, createNavItem(Material.PAPER, "§ePage " + (holder.getPage() + 1) + "§7/§e" + holder.getTotalPages(), List.of()));
+        inventory.setItem(47, createNavItem(Material.NAME_TAG, category.getDisplayName(), List.of("§7Catégorie actuelle")));
     }
 
     private ItemStack createFiller() {
@@ -673,21 +736,18 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
         ShopTemplate currentTemplate = templates.get(holder.getTemplateKey());
         if (slot == PREVIOUS_SLOT && holder.getPage() > 0 && currentTemplate != null) {
-            openTemplate(player, currentTemplate, holder.getPage() - 1);
+            openTemplate(player, currentTemplate, holder.getCategoryIndex(), holder.getPage() - 1);
             return;
         }
 
         if (slot == NEXT_SLOT && holder.getPage() + 1 < holder.getTotalPages() && currentTemplate != null) {
-            openTemplate(player, currentTemplate, holder.getPage() + 1);
+            openTemplate(player, currentTemplate, holder.getCategoryIndex(), holder.getPage() + 1);
             return;
         }
 
-        Optional<String> targetTemplate = holder.getTabTarget(slot);
-        if (targetTemplate.isPresent()) {
-            ShopTemplate template = templates.get(targetTemplate.get());
-            if (template != null) {
-                openTemplate(player, template);
-            }
+        Optional<Integer> targetCategory = holder.getCategoryTarget(slot);
+        if (targetCategory.isPresent() && currentTemplate != null) {
+            openTemplate(player, currentTemplate, targetCategory.get(), 0);
             return;
         }
 
@@ -831,16 +891,25 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             if (rawIcon != null && !rawIcon.isBlank()) {
                 config.set(path + ".icon", rawIcon);
             }
-            List<Map<String, Object>> items = new ArrayList<>();
-            for (ShopOffer offer : template.getOffers()) {
-                Map<String, Object> map = new LinkedHashMap<>();
-                map.put("item", offer.getMaterial().name());
-                map.put("amount", offer.getAmount());
-                map.put("buy-price", offer.buyPrice());
-                map.put("sell-price", offer.sellPrice());
-                items.add(map);
+            if (template.isSingleDefaultCategory()) {
+                ShopCategory category = template.getCategory(0);
+                if (category != null) {
+                    config.set(path + ".items", serializeOffers(category.getOffers()));
+                }
+            } else {
+                for (ShopCategory category : template.getCategories()) {
+                    String categoryPath = path + ".categories." + category.getKey();
+                    String categoryDisplay = category.getRawDisplayName();
+                    if (categoryDisplay != null && !categoryDisplay.isBlank()) {
+                        config.set(categoryPath + ".display-name", categoryDisplay);
+                    }
+                    String categoryIcon = category.getRawIconName();
+                    if (categoryIcon != null && !categoryIcon.isBlank()) {
+                        config.set(categoryPath + ".icon", categoryIcon);
+                    }
+                    config.set(categoryPath + ".items", serializeOffers(category.getOffers()));
+                }
             }
-            config.set(path + ".items", items);
         }
         try {
             config.save(templatesFile);
@@ -848,5 +917,21 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         } catch (IOException e) {
             plugin.getLogger().severe("Impossible d'enregistrer shop-templates.yml: " + e.getMessage());
         }
+    }
+
+    private List<Map<String, Object>> serializeOffers(List<ShopOffer> offers) {
+        List<Map<String, Object>> items = new ArrayList<>();
+        if (offers == null) {
+            return items;
+        }
+        for (ShopOffer offer : offers) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("item", offer.getMaterial().name());
+            map.put("amount", offer.getAmount());
+            map.put("buy-price", offer.buyPrice());
+            map.put("sell-price", offer.sellPrice());
+            items.add(map);
+        }
+        return items;
     }
 }
