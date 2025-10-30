@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.NumberFormat;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
@@ -162,13 +163,18 @@ public class EconomyManager implements EconomyService, Listener {
             Scoreboard scoreboard = manager.getNewScoreboard();
             Objective newObjective = scoreboard.registerNewObjective(SCOREBOARD_OBJECTIVE, "dummy", ChatColor.GOLD + "Argent");
             newObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
+            newObjective.setNumberFormat(NumberFormat.blank());
 
             Team balanceTeam = scoreboard.registerNewTeam(BALANCE_TEAM);
             balanceTeam.addEntry(BALANCE_ENTRY);
             newObjective.getScore(BALANCE_ENTRY).setScore(1);
 
             player.setScoreboard(scoreboard);
+            return;
         }
+
+        objective.setDisplayName(ChatColor.GOLD + "Argent");
+        objective.setNumberFormat(NumberFormat.blank());
     }
 
     private void updateBalanceDisplay(UUID playerId) {
@@ -179,11 +185,15 @@ public class EconomyManager implements EconomyService, Listener {
 
         setupSidebar(player);
         Scoreboard scoreboard = player.getScoreboard();
+        Objective objective = scoreboard.getObjective(SCOREBOARD_OBJECTIVE);
+        if (objective != null) {
+            objective.setNumberFormat(NumberFormat.blank());
+        }
+
         Team team = scoreboard.getTeam(BALANCE_TEAM);
         if (team == null) {
             team = scoreboard.registerNewTeam(BALANCE_TEAM);
             team.addEntry(BALANCE_ENTRY);
-            Objective objective = scoreboard.getObjective(SCOREBOARD_OBJECTIVE);
             if (objective != null) {
                 objective.getScore(BALANCE_ENTRY).setScore(1);
             }
