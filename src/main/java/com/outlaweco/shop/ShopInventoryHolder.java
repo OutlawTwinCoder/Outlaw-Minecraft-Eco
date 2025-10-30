@@ -3,7 +3,10 @@ package com.outlaweco.shop;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public class ShopInventoryHolder implements InventoryHolder {
 
@@ -14,27 +17,35 @@ public class ShopInventoryHolder implements InventoryHolder {
 
     private final ViewType viewType;
     private final String templateKey;
-    private final List<String> tabKeys;
-    private final List<ShopOffer> offers;
+    private final Map<Integer, String> tabSlots;
+    private final Map<Integer, ShopOffer> offerSlots;
     private final String tabKey;
     private final int backSlot;
 
-    public ShopInventoryHolder(String templateKey, List<String> tabKeys) {
-        this.viewType = ViewType.TAB_SELECTION;
+    private ShopInventoryHolder(
+            ViewType viewType,
+            String templateKey,
+            Map<Integer, String> tabSlots,
+            Map<Integer, ShopOffer> offerSlots,
+            String tabKey,
+            int backSlot
+    ) {
+        this.viewType = viewType;
         this.templateKey = templateKey;
-        this.tabKeys = List.copyOf(tabKeys);
-        this.offers = List.of();
-        this.tabKey = null;
-        this.backSlot = -1;
-    }
-
-    public ShopInventoryHolder(String templateKey, String tabKey, List<ShopOffer> offers, int backSlot) {
-        this.viewType = ViewType.TAB_CONTENT;
-        this.templateKey = templateKey;
-        this.tabKeys = List.of();
-        this.offers = List.copyOf(offers);
+        this.tabSlots = tabSlots;
+        this.offerSlots = offerSlots;
         this.tabKey = tabKey;
         this.backSlot = backSlot;
+    }
+
+    public static ShopInventoryHolder forTabSelection(String templateKey, Map<Integer, String> tabSlots) {
+        Map<Integer, String> safeSlots = Collections.unmodifiableMap(new LinkedHashMap<>(tabSlots));
+        return new ShopInventoryHolder(ViewType.TAB_SELECTION, templateKey, safeSlots, Collections.emptyMap(), null, -1);
+    }
+
+    public static ShopInventoryHolder forTabContent(String templateKey, String tabKey, Map<Integer, ShopOffer> offerSlots, int backSlot) {
+        Map<Integer, ShopOffer> safeSlots = Collections.unmodifiableMap(new LinkedHashMap<>(offerSlots));
+        return new ShopInventoryHolder(ViewType.TAB_CONTENT, templateKey, Collections.emptyMap(), safeSlots, tabKey, backSlot);
     }
 
     public ViewType getViewType() {
@@ -45,20 +56,20 @@ public class ShopInventoryHolder implements InventoryHolder {
         return templateKey;
     }
 
-    public List<String> getTabKeys() {
-        return tabKeys;
+    public Optional<String> getTabKey(int slot) {
+        return Optional.ofNullable(tabSlots.get(slot));
     }
 
-    public List<ShopOffer> getOffers() {
-        return offers;
+    public Optional<ShopOffer> getOffer(int slot) {
+        return Optional.ofNullable(offerSlots.get(slot));
     }
 
-    public String getTabKey() {
+    public String getActiveTabKey() {
         return tabKey;
     }
 
-    public int getBackSlot() {
-        return backSlot;
+    public boolean isBackSlot(int slot) {
+        return backSlot != -1 && backSlot == slot;
     }
 
     @Override

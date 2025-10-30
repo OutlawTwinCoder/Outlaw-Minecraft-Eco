@@ -27,6 +27,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
@@ -519,67 +520,94 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§cCette boutique n'a aucun onglet configuré.");
             return;
         }
+
         int size = computeInventorySize(tabs.size());
-        Inventory inventory = Bukkit.createInventory(new ShopInventoryHolder(template.getKey(), template.getTabKeys()), size, template.getDisplayName());
-        for (int i = 0; i < tabs.size() && i < inventory.getSize(); i++) {
-            ShopTab tab = tabs.get(i);
-            ItemStack icon = tab.createIconItem();
-            ItemMeta meta = icon.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(tab.getDisplayName());
-                meta.setLore(List.of("§7Clique pour ouvrir"));
-                icon.setItemMeta(meta);
-            }
-            inventory.setItem(i, icon);
+        Map<Integer, String> tabSlots = new LinkedHashMap<>();
+        for (int i = 0; i < tabs.size() && i < size; i++) {
+            tabSlots.put(i, tabs.get(i).getKey());
         }
-        player.openInventory(inventory);
+
+        ShopInventoryHolder holder = ShopInventoryHolder.forTabSelection(template.getKey(), tabSlots);
+        Inventory inventory = Bukkit.createInventory(holder, size, template.getDisplayName());
+
+        for (Map.Entry<Integer, String> entry : tabSlots.entrySet()) {
+            template.getTab(entry.getValue()).ifPresent(tab -> inventory.setItem(entry.getKey(), createTabIcon(tab)));
+        }
+
+        showInventory(player, inventory);
     }
 
     private void openTab(Player player, ShopTemplate template, ShopTab tab) {
         List<ShopOffer> offers = tab.getOffers();
         int size = computeInventorySize(offers.size() + 1);
         int backSlot = offers.size() < size ? size - 1 : -1;
-        Inventory inventory = Bukkit.createInventory(new ShopInventoryHolder(template.getKey(), tab.getKey(), offers, backSlot), size, tab.getDisplayName());
 
+        Map<Integer, ShopOffer> offerSlots = new LinkedHashMap<>();
         int slotIndex = 0;
         for (ShopOffer offer : offers) {
             if (backSlot != -1 && slotIndex == backSlot) {
                 slotIndex++;
             }
-            if (slotIndex >= inventory.getSize()) {
+            if (slotIndex >= size) {
                 break;
             }
-            ItemStack item = offer.item();
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                List<String> lore = new ArrayList<>();
-                lore.add("§aAchat: §e" + String.format(Locale.US, "%.2f", offer.buyPrice()));
-                if (offer.sellPrice() > 0) {
-                    lore.add("§cVente: §e" + String.format(Locale.US, "%.2f", offer.sellPrice()));
-                    lore.add("§7Clique gauche pour acheter");
-                    lore.add("§7Clique droit pour vendre");
-                } else {
-                    lore.add("§7Clique gauche pour acheter");
-                }
-                meta.setLore(lore);
-                item.setItemMeta(meta);
-            }
-            inventory.setItem(slotIndex, item);
+            offerSlots.put(slotIndex, offer);
             slotIndex++;
         }
 
-        if (backSlot != -1 && backSlot < inventory.getSize()) {
-            ItemStack backItem = new ItemStack(Material.ARROW);
-            ItemMeta meta = backItem.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName("§eRetour");
-                meta.setLore(List.of("§7Clique pour revenir aux onglets"));
-                backItem.setItemMeta(meta);
-            }
-            inventory.setItem(backSlot, backItem);
+        ShopInventoryHolder holder = ShopInventoryHolder.forTabContent(template.getKey(), tab.getKey(), offerSlots, backSlot);
+        Inventory inventory = Bukkit.createInventory(holder, size, tab.getDisplayName());
+
+        for (Map.Entry<Integer, ShopOffer> entry : offerSlots.entrySet()) {
+            inventory.setItem(entry.getKey(), createOfferDisplayItem(entry.getValue()));
         }
 
-        player.openInventory(inventory);
+        if (backSlot != -1 && backSlot < size) {
+            inventory.setItem(backSlot, createBackButton());
+        }
+
+        showInventory(player, inventory);
+    }
+
+    private ItemStack createTabIcon(ShopTab tab) {
+        ItemStack icon = tab.createIconItem();
+        ItemMeta meta = icon.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(tab.getDisplayName());
+            meta.setLore(List.of("§7Clique pour ouvrir"));
+            icon.setItemMeta(meta);
+        }
+        return icon;
+    }
+
+    private ItemStack createOfferDisplayItem(ShopOffer offer) {
+        ItemStack item = offer.item();
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            List<String> lore = new ArrayList<>();
+            lore.add("§aAchat: §e" + formatPrice(offer.buyPrice()));
+            if (offer.sellPrice() > 0) {
+                lore.add("§cVente: §e" + formatPrice(offer.sellPrice()));
+                lore.add("§7Clique gauche pour acheter");
+                lore.add("§7Clique droit pour vendre");
+            } else {
+                lore.add("§7Clique gauche pour acheter");
+            }
+            meta.setLore(lore);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private ItemStack createBackButton() {
+        ItemStack backItem = new ItemStack(Material.ARROW);
+        ItemMeta meta = backItem.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName("§eRetour");
+            meta.setLore(List.of("§7Clique pour revenir aux onglets"));
+            backItem.setItemMeta(meta);
+        }
+        return backItem;
     }
 
     private int computeInventorySize(int contentCount) {
@@ -642,44 +670,26 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 return;
             }
             int slot = event.getRawSlot();
-            List<String> tabKeys = holder.getTabKeys();
-            if (slot >= tabKeys.size()) {
-                return;
-            }
-            String tabKey = tabKeys.get(slot);
-            Optional<ShopTab> tabOptional = template.getTab(tabKey);
-            if (tabOptional.isEmpty()) {
-                player.sendMessage("§cOnglet introuvable.");
-                return;
-            }
-            openTab(player, template, tabOptional.get());
+            holder.getTabKey(slot).flatMap(template::getTab).ifPresentOrElse(
+                    tab -> openTab(player, template, tab),
+                    () -> player.sendMessage("§cOnglet introuvable.")
+            );
             return;
         }
 
         if (holder.getViewType() == ShopInventoryHolder.ViewType.TAB_CONTENT) {
             int slot = event.getRawSlot();
-            int backSlot = holder.getBackSlot();
-            if (backSlot != -1 && slot == backSlot) {
+            if (holder.isBackSlot(slot)) {
                 openTemplate(player, template);
                 return;
             }
-            ItemStack current = event.getCurrentItem();
-            if (current == null || current.getType() == Material.AIR) {
-                return;
-            }
-            if (backSlot != -1 && slot > backSlot) {
-                slot--;
-            }
-            List<ShopOffer> offers = holder.getOffers();
-            if (slot < 0 || slot >= offers.size()) {
-                return;
-            }
-            ShopOffer offer = offers.get(slot);
-            if (event.isLeftClick()) {
-                handleBuy(player, offer);
-            } else if (event.isRightClick()) {
-                handleSell(player, offer);
-            }
+            holder.getOffer(slot).ifPresent(offer -> {
+                if (event.isLeftClick()) {
+                    handleBuy(player, offer);
+                } else if (event.isRightClick()) {
+                    handleSell(player, offer);
+                }
+            });
         }
     }
 
@@ -694,7 +704,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             leftovers.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
         }
         if (price > 0) {
-            player.sendMessage("§aAchat effectué pour §e" + String.format(Locale.US, "%.2f", price));
+            player.sendMessage("§aAchat effectué pour §e" + formatPrice(price));
         } else {
             player.sendMessage("§aAchat effectué.");
         }
@@ -713,7 +723,20 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
         removeItems(player.getInventory(), itemToSell);
         economyManager.deposit(player.getUniqueId(), sellPrice);
-        player.sendMessage("§aVente effectuée pour §e" + String.format(Locale.US, "%.2f", sellPrice));
+        player.sendMessage("§aVente effectuée pour §e" + formatPrice(sellPrice));
+    }
+
+    private void showInventory(Player player, Inventory inventory) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                player.openInventory(inventory);
+            }
+        }.runTask(plugin);
+    }
+
+    private String formatPrice(double value) {
+        return String.format(Locale.US, "%.2f", value);
     }
 
     private void removeItems(org.bukkit.inventory.PlayerInventory inventory, ItemStack item) {
