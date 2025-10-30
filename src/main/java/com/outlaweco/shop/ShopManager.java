@@ -7,6 +7,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -21,8 +23,11 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -32,8 +37,11 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.nio.charset.StandardCharsets;
 
 public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
@@ -67,6 +75,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private final NamespacedKey shopKey;
     private final Map<UUID, Shop> shops = new HashMap<>();
     private final Map<String, ShopTemplate> templates = new LinkedHashMap<>();
+    private final Map<UUID, PendingShopCreation> pendingCreations = new HashMap<>();
 
     public ShopManager(OutlawEconomyPlugin plugin) {
         this.plugin = plugin;
@@ -100,9 +109,35 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private void loadTemplates() {
         templates.clear();
-        ConfigurationSection root = templatesConfig.getConfigurationSection("templates");
-        if (root == null) {
+
+        this.templatesConfig = YamlConfiguration.loadConfiguration(templatesFile);
+        ConfigurationSection userRoot = templatesConfig.getConfigurationSection("templates");
+        populateTemplates(userRoot, true);
+
+        if (templates.isEmpty()) {
+            boolean loadedDefaults = false;
+            try (InputStream stream = plugin.getResource("shop-templates.yml")) {
+                if (stream != null) {
+                    YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(stream, StandardCharsets.UTF_8));
+                    ConfigurationSection defaultRoot = defaults.getConfigurationSection("templates");
+                    populateTemplates(defaultRoot, true);
+                    loadedDefaults = !templates.isEmpty();
+                }
+            } catch (IOException e) {
+                plugin.getLogger().warning("Impossible de lire les templates par défaut: " + e.getMessage());
+            }
+            if (loadedDefaults) {
+                plugin.getLogger().warning("Aucun template personnalisé détecté, utilisation des templates par défaut inclus dans le plugin.");
+            }
+        }
+
+        if (templates.isEmpty()) {
             plugin.getLogger().warning("Aucun template de boutique trouvé dans shop-templates.yml");
+        }
+    }
+
+    private void populateTemplates(ConfigurationSection root, boolean overrideExisting) {
+        if (root == null) {
             return;
         }
         for (String key : root.getKeys(false)) {
@@ -110,53 +145,63 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             if (section == null) {
                 continue;
             }
-            String displayName = section.getString("display-name");
-            ShopTemplate template = new ShopTemplate(key, displayName);
-            String iconName = section.getString("icon");
-            if (iconName != null && !iconName.isBlank()) {
-                Material iconMaterial = Material.matchMaterial(iconName);
-                if (iconMaterial != null) {
-                    template.setIcon(iconMaterial, iconName);
-                } else {
-                    plugin.getLogger().warning("Icône invalide '" + iconName + "' pour le template " + key);
-                }
+            ShopTemplate template = buildTemplateFromSection(key, section);
+            if (overrideExisting) {
+                templates.remove(template.getKey());
+            } else if (templates.containsKey(template.getKey())) {
+                continue;
             }
-
-            List<ShopCategory> categories = new ArrayList<>();
-
-            List<Map<?, ?>> rootItems = section.getMapList("items");
-            if (rootItems != null && !rootItems.isEmpty()) {
-                ShopCategory defaultCategory = new ShopCategory("default", null);
-                defaultCategory.setOffers(parseOffers(key, "default", rootItems));
-                categories.add(defaultCategory);
-            }
-
-            ConfigurationSection categoriesSection = section.getConfigurationSection("categories");
-            if (categoriesSection != null) {
-                for (String categoryKey : categoriesSection.getKeys(false)) {
-                    ConfigurationSection categorySection = categoriesSection.getConfigurationSection(categoryKey);
-                    if (categorySection == null) {
-                        continue;
-                    }
-                    ShopCategory category = new ShopCategory(categoryKey, categorySection.getString("display-name"));
-                    String categoryIconName = categorySection.getString("icon");
-                    if (categoryIconName != null && !categoryIconName.isBlank()) {
-                        Material categoryIcon = Material.matchMaterial(categoryIconName);
-                        if (categoryIcon != null) {
-                            category.setIcon(categoryIcon, categoryIconName);
-                        } else {
-                            plugin.getLogger().warning("Icône invalide '" + categoryIconName + "' pour la catégorie " + categoryKey + " du template " + key);
-                        }
-                    }
-                    List<Map<?, ?>> categoryItems = categorySection.getMapList("items");
-                    category.setOffers(parseOffers(key, categoryKey, categoryItems));
-                    categories.add(category);
-                }
-            }
-
-            template.setCategories(categories);
             templates.put(template.getKey(), template);
         }
+    }
+
+    private ShopTemplate buildTemplateFromSection(String key, ConfigurationSection section) {
+        String displayName = section.getString("display-name");
+        ShopTemplate template = new ShopTemplate(key, displayName);
+        String iconName = section.getString("icon");
+        if (iconName != null && !iconName.isBlank()) {
+            Material iconMaterial = Material.matchMaterial(iconName);
+            if (iconMaterial != null) {
+                template.setIcon(iconMaterial, iconName);
+            } else {
+                plugin.getLogger().warning("Icône invalide '" + iconName + "' pour le template " + key);
+            }
+        }
+
+        List<ShopCategory> categories = new ArrayList<>();
+
+        List<Map<?, ?>> rootItems = section.getMapList("items");
+        if (rootItems != null && !rootItems.isEmpty()) {
+            ShopCategory defaultCategory = new ShopCategory("default", null);
+            defaultCategory.setOffers(parseOffers(key, "default", rootItems));
+            categories.add(defaultCategory);
+        }
+
+        ConfigurationSection categoriesSection = section.getConfigurationSection("categories");
+        if (categoriesSection != null) {
+            for (String categoryKey : categoriesSection.getKeys(false)) {
+                ConfigurationSection categorySection = categoriesSection.getConfigurationSection(categoryKey);
+                if (categorySection == null) {
+                    continue;
+                }
+                ShopCategory category = new ShopCategory(categoryKey, categorySection.getString("display-name"));
+                String categoryIconName = categorySection.getString("icon");
+                if (categoryIconName != null && !categoryIconName.isBlank()) {
+                    Material categoryIcon = Material.matchMaterial(categoryIconName);
+                    if (categoryIcon != null) {
+                        category.setIcon(categoryIcon, categoryIconName);
+                    } else {
+                        plugin.getLogger().warning("Icône invalide '" + categoryIconName + "' pour la catégorie " + categoryKey + " du template " + key);
+                    }
+                }
+                List<Map<?, ?>> categoryItems = categorySection.getMapList("items");
+                category.setOffers(parseOffers(key, categoryKey, categoryItems));
+                categories.add(category);
+            }
+        }
+
+        template.setCategories(categories);
+        return template;
     }
 
     private double getDouble(Object value, double def) {
@@ -349,8 +394,16 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§cTemplate introuvable.");
             return true;
         }
-        createShop(player, templateKey);
-        player.sendMessage("§aBoutique créée avec le template §e" + templateKey + "§a.");
+        String display = ChatColor.stripColor(template.getDisplayName());
+        if (display == null || display.isBlank()) {
+            display = template.getKey();
+        }
+        PendingShopCreation pending = new PendingShopCreation(templateKey, display);
+        PendingShopCreation previous = pendingCreations.put(player.getUniqueId(), pending);
+        if (previous != null) {
+            player.sendMessage("§eCréation précédente remplacée.");
+        }
+        player.sendMessage("§aClique droit sur un bloc pour placer la boutique §e" + pending.templateDisplayName() + "§a.");
         return true;
     }
 
@@ -456,7 +509,6 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§cVous n'avez pas la permission.");
             return true;
         }
-        this.templatesConfig = YamlConfiguration.loadConfiguration(templatesFile);
         loadTemplates();
         updateVillagers();
         player.sendMessage("§aTemplates rechargés.");
@@ -476,13 +528,18 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
-    private void createShop(Player player, String templateKey) {
-        Location loc = player.getLocation();
+    private void createShop(Player player, PendingShopCreation pending, Location location) {
+        ShopTemplate template = templates.get(pending.templateKey());
+        if (template == null) {
+            player.sendMessage("§cTemplate introuvable.");
+            return;
+        }
         UUID id = UUID.randomUUID();
-        Shop shop = new Shop(id, templateKey, loc);
+        Shop shop = new Shop(id, pending.templateKey(), location);
         spawnShopEntity(shop);
         shops.put(id, shop);
         saveShop(shop);
+        player.sendMessage("§aBoutique §e" + pending.templateDisplayName() + " §acréée.");
     }
 
     private void removeShop(Player player) {
@@ -735,6 +792,41 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     }
 
     @EventHandler
+    public void onPendingPlacement(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        PendingShopCreation pending = pendingCreations.get(player.getUniqueId());
+        if (pending == null) {
+            return;
+        }
+
+        Action action = event.getAction();
+        if (action != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+
+        Block block = event.getClickedBlock();
+        if (block == null) {
+            return;
+        }
+
+        Block above = block.getRelative(BlockFace.UP);
+        if (above.getType().isSolid()) {
+            player.sendMessage("§cPas assez d'espace pour placer la boutique ici.");
+            event.setCancelled(true);
+            return;
+        }
+
+        Location spawnLocation = block.getLocation().add(0.5, 1, 0.5);
+        Location playerLocation = player.getLocation();
+        spawnLocation.setYaw(playerLocation.getYaw());
+        spawnLocation.setPitch(0f);
+
+        pendingCreations.remove(player.getUniqueId());
+        event.setCancelled(true);
+        createShop(player, pending, spawnLocation);
+    }
+
+    @EventHandler
     public void onInteract(PlayerInteractAtEntityEvent event) {
         Entity entity = event.getRightClicked();
         UUID shopId = getShopId(entity);
@@ -747,6 +839,10 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return;
         }
         Player player = event.getPlayer();
+        if (pendingCreations.containsKey(player.getUniqueId())) {
+            player.sendMessage("§cClique d'abord sur un bloc pour placer la nouvelle boutique.");
+            return;
+        }
         if (!player.hasPermission(PERMISSION_USE) && !player.hasPermission(PERMISSION_ADMIN)) {
             player.sendMessage("§cVous n'avez pas la permission d'utiliser cette boutique.");
             return;
@@ -886,6 +982,11 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        pendingCreations.remove(event.getPlayer().getUniqueId());
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!(sender instanceof Player player)) {
@@ -993,5 +1094,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             items.add(map);
         }
         return items;
+    }
+
+    private record PendingShopCreation(String templateKey, String templateDisplayName) {
     }
 }
