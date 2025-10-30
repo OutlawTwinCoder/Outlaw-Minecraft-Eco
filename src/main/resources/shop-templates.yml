@@ -1,0 +1,82 @@
+templates:
+  tools:
+    display-name: "&eBoutique Outils"
+    items:
+      - material: IRON_PICKAXE
+        quantity: 1
+        buy-price: 75
+        sell-price: 45
+      - material: IRON_AXE
+        quantity: 1
+        buy-price: 70
+        sell-price: 42
+      - material: IRON_SHOVEL
+        quantity: 1
+        buy-price: 45
+        sell-price: 27
+      - material: DIAMOND_PICKAXE
+        quantity: 1
+        buy-price: 450
+        sell-price: 270
+      - material: SHIELD
+        quantity: 1
+        buy-price: 90
+        sell-price: 54
+      - material: CROSSBOW
+        quantity: 1
+        buy-price: 125
+        sell-price: 75
+  blocks:
+    display-name: "&eBoutique Blocs"
+    items:
+      - material: WHITE_CONCRETE
+        quantity: 16
+        buy-price: 40
+        sell-price: 24
+      - material: RED_CONCRETE
+        quantity: 16
+        buy-price: 40
+        sell-price: 24
+      - material: BLUE_CONCRETE
+        quantity: 16
+        buy-price: 40
+        sell-price: 24
+      - material: GLASS
+        quantity: 32
+        buy-price: 30
+        sell-price: 18
+      - material: SEA_LANTERN
+        quantity: 8
+        buy-price: 55
+        sell-price: 33
+      - material: BRICKS
+        quantity: 32
+        buy-price: 45
+        sell-price: 27
+  food:
+    display-name: "&eBoutique Nourriture"
+    items:
+      - material: COOKED_BEEF
+        quantity: 16
+        buy-price: 32
+        sell-price: 20
+      - material: BREAD
+        quantity: 16
+        buy-price: 18
+        sell-price: 11
+      - material: GOLDEN_CARROT
+        quantity: 16
+        buy-price: 60
+        sell-price: 36
+      - material: CAKE
+        quantity: 1
+        buy-price: 25
+        sell-price: 15
+      - material: MUSHROOM_STEW
+        quantity: 4
+        buy-price: 20
+        sell-price: 12
+      - material: PUMPKIN_PIE
+        quantity: 8
+        buy-price: 28
+        sell-price: 17
