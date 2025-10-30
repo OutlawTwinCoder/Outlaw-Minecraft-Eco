@@ -1,0 +1,789 @@
+templates:
+  tools:
+    display-name: '&eBoutique Outils'
+    items:
+      - item: IRON_PICKAXE
+        amount: 1
+        buy-price: 75
+        sell-price: 45
+      - item: IRON_AXE
+        amount: 1
+        buy-price: 70
+        sell-price: 42
+      - item: IRON_SHOVEL
+        amount: 1
+        buy-price: 45
+        sell-price: 27
+      - item: DIAMOND_PICKAXE
+        amount: 1
+        buy-price: 450
+        sell-price: 270
+      - item: SHIELD
+        amount: 1
+        buy-price: 90
+        sell-price: 54
+      - item: CROSSBOW
+        amount: 1
+        buy-price: 125
+        sell-price: 75
+  blocks:
+    display-name: '&eBoutique Blocs'
+    items:
+      - item: WHITE_CONCRETE
+        amount: 16
+        buy-price: 40
+        sell-price: 24
+      - item: RED_CONCRETE
+        amount: 16
+        buy-price: 40
+        sell-price: 24
+      - item: BLUE_CONCRETE
+        amount: 16
+        buy-price: 40
+        sell-price: 24
+      - item: GLASS
+        amount: 32
+        buy-price: 30
+        sell-price: 18
+      - item: SEA_LANTERN
+        amount: 8
+        buy-price: 55
+        sell-price: 33
+      - item: BRICKS
+        amount: 32
+        buy-price: 45
+        sell-price: 27
+  food:
+    display-name: '&eBoutique Nourriture'
+    items:
+      - item: COOKED_BEEF
+        amount: 16
+        buy-price: 32
+        sell-price: 20
+      - item: BREAD
+        amount: 16
+        buy-price: 18
+        sell-price: 11
+      - item: GOLDEN_CARROT
+        amount: 16
+        buy-price: 60
+        sell-price: 36
+      - item: CAKE
+        amount: 1
+        buy-price: 25
+        sell-price: 15
+      - item: MUSHROOM_STEW
+        amount: 4
+        buy-price: 20
+        sell-price: 12
+      - item: PUMPKIN_PIE
+        amount: 8
+        buy-price: 28
+        sell-price: 17
+  color:
+    display-name: '&eBoutique des couleur'
+    items:
+      - item: WHITE_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_WOOL
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_CARPET
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_CONCRETE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_CONCRETE_POWDER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_GLAZED_TERRACOTTA
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_STAINED_GLASS
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_STAINED_GLASS_PANE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_BED
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_BANNER
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: WHITE_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: ORANGE_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: MAGENTA_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_BLUE_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: YELLOW_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIME_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PINK_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GRAY_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: LIGHT_GRAY_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: CYAN_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: PURPLE_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLUE_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BROWN_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: GREEN_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: RED_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48
+      - item: BLACK_CANDLE
+        amount: 16
+        buy-price: 80
+        sell-price: 48

@@ -1,5 +1,6 @@
 package com.outlaweco.shop;
 
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 public class ShopOffer {
@@ -15,6 +16,14 @@ public class ShopOffer {
 
     public ItemStack item() {
         return item.clone();
+    }
+
+    public Material getMaterial() {
+        return item.getType();
+    }
+
+    public int getAmount() {
+        return item.getAmount();
     }
 
     public double buyPrice() {
