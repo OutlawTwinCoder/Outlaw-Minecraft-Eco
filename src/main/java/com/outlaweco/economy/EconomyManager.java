@@ -1,6 +1,8 @@
 package com.outlaweco.economy;
 
 import com.outlaweco.api.EconomyService;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -9,9 +11,15 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.Team;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,9 +28,14 @@ import java.util.UUID;
 public class EconomyManager implements EconomyService, Listener {
 
     private final Plugin plugin;
+    private static final String SCOREBOARD_OBJECTIVE = "outlaweco";
+    private static final String BALANCE_TEAM = "balanceValue";
+    private static final String BALANCE_ENTRY = ChatColor.DARK_GREEN.toString();
+
     private final Map<UUID, Double> balances = Collections.synchronizedMap(new HashMap<>());
     private final File balanceFile;
     private final FileConfiguration balanceConfig;
+    private final DecimalFormat decimalFormat = new DecimalFormat("#,##0.00");
 
     public EconomyManager(Plugin plugin) {
         this.plugin = plugin;
@@ -64,6 +77,13 @@ public class EconomyManager implements EconomyService, Listener {
 
     public void ensureAccount(UUID playerId) {
         balances.putIfAbsent(playerId, plugin.getConfig().getDouble("economy.starting-balance", 0));
+        updateBalanceDisplay(playerId);
+    }
+
+    public void initializePlayer(Player player) {
+        ensureAccount(player.getUniqueId());
+        setupSidebar(player);
+        updateBalanceDisplay(player.getUniqueId());
     }
 
     public void deposit(Player player, double amount) {
@@ -93,6 +113,7 @@ public class EconomyManager implements EconomyService, Listener {
     @Override
     public void setBalance(UUID playerId, double amount) {
         balances.put(playerId, Math.max(0, amount));
+        updateBalanceDisplay(playerId);
     }
 
     @Override
@@ -101,6 +122,7 @@ public class EconomyManager implements EconomyService, Listener {
             return;
         }
         balances.put(playerId, getBalance(playerId) + amount);
+        updateBalanceDisplay(playerId);
     }
 
     @Override
@@ -113,6 +135,7 @@ public class EconomyManager implements EconomyService, Listener {
             return false;
         }
         balances.put(playerId, balance - amount);
+        updateBalanceDisplay(playerId);
         return true;
     }
 
@@ -123,6 +146,53 @@ public class EconomyManager implements EconomyService, Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        ensureAccount(event.getPlayer().getUniqueId());
+        initializePlayer(event.getPlayer());
+    }
+
+    private void setupSidebar(Player player) {
+        ScoreboardManager manager = Bukkit.getScoreboardManager();
+        if (manager == null) {
+            return;
+        }
+
+        Scoreboard current = player.getScoreboard();
+        Objective objective = current != null ? current.getObjective(SCOREBOARD_OBJECTIVE) : null;
+
+        if (current == null || current == manager.getMainScoreboard() || objective == null) {
+            Scoreboard scoreboard = manager.getNewScoreboard();
+            Objective newObjective = scoreboard.registerNewObjective(SCOREBOARD_OBJECTIVE, "dummy", ChatColor.GOLD + "Économie");
+            newObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+            // Add a label line and spacer to keep layout stable.
+            newObjective.getScore(ChatColor.YELLOW + "Solde").setScore(3);
+            newObjective.getScore(ChatColor.DARK_GRAY.toString()).setScore(2);
+
+            Team balanceTeam = scoreboard.registerNewTeam(BALANCE_TEAM);
+            balanceTeam.addEntry(BALANCE_ENTRY);
+            newObjective.getScore(BALANCE_ENTRY).setScore(1);
+
+            player.setScoreboard(scoreboard);
+        }
+    }
+
+    private void updateBalanceDisplay(UUID playerId) {
+        Player player = Bukkit.getPlayer(playerId);
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+
+        setupSidebar(player);
+        Scoreboard scoreboard = player.getScoreboard();
+        Team team = scoreboard.getTeam(BALANCE_TEAM);
+        if (team == null) {
+            team = scoreboard.registerNewTeam(BALANCE_TEAM);
+            team.addEntry(BALANCE_ENTRY);
+            Objective objective = scoreboard.getObjective(SCOREBOARD_OBJECTIVE);
+            if (objective != null) {
+                objective.getScore(BALANCE_ENTRY).setScore(1);
+            }
+        }
+
+        team.setPrefix(ChatColor.GREEN + decimalFormat.format(getBalance(playerId)));
     }
 }

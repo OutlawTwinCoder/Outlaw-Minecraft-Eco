@@ -7,6 +7,7 @@ import com.outlaweco.shop.ShopManager;
 import com.outlaweco.trade.TradeManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -36,6 +37,10 @@ public class OutlawEconomyPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(economyManager, this);
 
         registerCommands();
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            economyManager.initializePlayer(player);
+        }
 
         getLogger().info("OutlawEconomy enabled.");
     }
