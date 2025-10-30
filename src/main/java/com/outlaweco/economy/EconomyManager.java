@@ -1,6 +1,7 @@
 package com.outlaweco.economy;
 
 import com.outlaweco.api.EconomyService;
+import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -208,13 +209,9 @@ public class EconomyManager implements EconomyService, Listener {
             return;
         }
         try {
-            Class<?> numberFormatClass = Class.forName("org.bukkit.scoreboard.NumberFormat");
-            Object blankFormat = numberFormatClass.getMethod("blank").invoke(null);
-            objective.getClass().getMethod("setNumberFormat", numberFormatClass).invoke(objective, blankFormat);
-        } catch (ClassNotFoundException ignored) {
+            objective.numberFormat(NumberFormat.blank());
+        } catch (NoSuchMethodError | NoClassDefFoundError ignored) {
             // API level does not support number formatting; ignore so we stay compatible with older servers.
-        } catch (ReflectiveOperationException e) {
-            plugin.getLogger().fine("Impossible d'appliquer le format de numéro vierge : " + e.getMessage());
         }
     }
 }

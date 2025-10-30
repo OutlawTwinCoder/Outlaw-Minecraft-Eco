@@ -3,24 +3,110 @@ package com.outlaweco.shop;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public class ShopInventoryHolder implements InventoryHolder {
 
     private final String templateKey;
-    private final List<ShopOffer> offers;
+    private final String categoryKey;
+    private final String categoryDisplayName;
+    private final int categoryIndex;
+    private final int totalCategories;
+    private final int categoryPage;
+    private final int totalCategoryPages;
+    private final int categoriesPerPage;
+    private final Map<Integer, ShopOffer> offerSlots = new HashMap<>();
+    private final Map<Integer, Integer> categoryTargets = new HashMap<>();
+    private final Map<Integer, Integer> categoryPageTargets = new HashMap<>();
+    private final int page;
+    private final int totalPages;
 
-    public ShopInventoryHolder(String templateKey, List<ShopOffer> offers) {
+    public ShopInventoryHolder(String templateKey,
+                               String categoryKey,
+                               String categoryDisplayName,
+                               int categoryIndex,
+                               int totalCategories,
+                               int categoryPage,
+                               int totalCategoryPages,
+                               int categoriesPerPage,
+                               int page,
+                               int totalPages) {
         this.templateKey = templateKey;
-        this.offers = offers;
+        this.categoryKey = categoryKey;
+        this.categoryDisplayName = categoryDisplayName;
+        this.categoryIndex = categoryIndex;
+        this.totalCategories = totalCategories;
+        this.categoryPage = categoryPage;
+        this.totalCategoryPages = totalCategoryPages;
+        this.categoriesPerPage = categoriesPerPage;
+        this.page = page;
+        this.totalPages = totalPages;
     }
 
     public String getTemplateKey() {
         return templateKey;
     }
 
-    public List<ShopOffer> getOffers() {
-        return offers;
+    public String getCategoryKey() {
+        return categoryKey;
+    }
+
+    public String getCategoryDisplayName() {
+        return categoryDisplayName;
+    }
+
+    public int getCategoryIndex() {
+        return categoryIndex;
+    }
+
+    public int getTotalCategories() {
+        return totalCategories;
+    }
+
+    public int getCategoryPage() {
+        return categoryPage;
+    }
+
+    public int getTotalCategoryPages() {
+        return totalCategoryPages;
+    }
+
+    public int getCategoriesPerPage() {
+        return categoriesPerPage;
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    public int getTotalPages() {
+        return totalPages;
+    }
+
+    public void registerOfferSlot(int slot, ShopOffer offer) {
+        offerSlots.put(slot, offer);
+    }
+
+    public ShopOffer getOffer(int slot) {
+        return offerSlots.get(slot);
+    }
+
+    public void registerCategorySlot(int slot, int categoryIndex) {
+        categoryTargets.put(slot, categoryIndex);
+    }
+
+    public Optional<Integer> getCategoryTarget(int slot) {
+        return Optional.ofNullable(categoryTargets.get(slot));
+    }
+
+    public void registerCategoryPageSlot(int slot, int targetPage) {
+        categoryPageTargets.put(slot, targetPage);
+    }
+
+    public Optional<Integer> getCategoryPageTarget(int slot) {
+        return Optional.ofNullable(categoryPageTargets.get(slot));
     }
 
     @Override

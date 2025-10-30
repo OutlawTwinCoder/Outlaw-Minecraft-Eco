@@ -80,3 +80,1271 @@ templates:
         amount: 8
         buy-price: 28
         sell-price: 17
+  color:
+    display-name: '&eBoutique des couleur'
+    icon: WHITE_WOOL
+    categories:
+      wool:
+        display-name: '&dLaine'
+        icon: WHITE_WOOL
+        items:
+          - item: WHITE_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_WOOL
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      carpet:
+        display-name: '&dTapis'
+        icon: WHITE_CARPET
+        items:
+          - item: WHITE_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_CARPET
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      concrete:
+        display-name: '&dBéton'
+        icon: WHITE_CONCRETE
+        items:
+          - item: WHITE_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_CONCRETE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      concrete-powder:
+        display-name: '&dBéton en poudre'
+        icon: WHITE_CONCRETE_POWDER
+        items:
+          - item: WHITE_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_CONCRETE_POWDER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      terracotta:
+        display-name: '&dTerre cuite'
+        icon: WHITE_TERRACOTTA
+        items:
+          - item: WHITE_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      glazed-terracotta:
+        display-name: '&dTerre cuite émaillée'
+        icon: WHITE_GLAZED_TERRACOTTA
+        items:
+          - item: WHITE_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_GLAZED_TERRACOTTA
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      stained-glass:
+        display-name: '&dVerre teinté'
+        icon: WHITE_STAINED_GLASS
+        items:
+          - item: WHITE_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_STAINED_GLASS
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      stained-glass-pane:
+        display-name: '&dPanneaux teintés'
+        icon: WHITE_STAINED_GLASS_PANE
+        items:
+          - item: WHITE_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_STAINED_GLASS_PANE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      bed:
+        display-name: '&dLits'
+        icon: WHITE_BED
+        items:
+          - item: WHITE_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_BED
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      banner:
+        display-name: '&dBannières'
+        icon: WHITE_BANNER
+        items:
+          - item: WHITE_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_BANNER
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+      candle:
+        display-name: '&dBougies'
+        icon: WHITE_CANDLE
+        items:
+          - item: WHITE_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: ORANGE_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: MAGENTA_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_BLUE_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: YELLOW_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIME_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PINK_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GRAY_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: LIGHT_GRAY_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: CYAN_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: PURPLE_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLUE_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BROWN_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: GREEN_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: RED_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+          - item: BLACK_CANDLE
+            amount: 16
+            buy-price: 80
+            sell-price: 48
+  construction:
+    display-name: '&eBoutique Construction'
+    icon: BRICKS
+    categories:
+      stone:
+        display-name: '&7Pierre'
+        icon: STONE
+        items:
+          - item: STONE
+            amount: 32
+            buy-price: 48
+            sell-price: 30
+          - item: SMOOTH_STONE
+            amount: 32
+            buy-price: 52
+            sell-price: 32
+          - item: STONE_STAIRS
+            amount: 16
+            buy-price: 38
+            sell-price: 22
+          - item: STONE_SLAB
+            amount: 24
+            buy-price: 32
+            sell-price: 18
+      cobblestone:
+        display-name: '&7Pierre taillée'
+        icon: COBBLESTONE
+        items:
+          - item: COBBLESTONE
+            amount: 32
+            buy-price: 40
+            sell-price: 24
+          - item: COBBLESTONE_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: COBBLESTONE_SLAB
+            amount: 24
+            buy-price: 30
+            sell-price: 16
+          - item: COBBLESTONE_WALL
+            amount: 16
+            buy-price: 34
+            sell-price: 20
+      mossy_cobblestone:
+        display-name: '&2Pierre moussue'
+        icon: MOSSY_COBBLESTONE
+        items:
+          - item: MOSSY_COBBLESTONE
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: MOSSY_COBBLESTONE_STAIRS
+            amount: 16
+            buy-price: 38
+            sell-price: 22
+          - item: MOSSY_COBBLESTONE_SLAB
+            amount: 24
+            buy-price: 34
+            sell-price: 20
+          - item: MOSSY_COBBLESTONE_WALL
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+      stone_bricks:
+        display-name: '&7Briques de pierre'
+        icon: STONE_BRICKS
+        items:
+          - item: STONE_BRICKS
+            amount: 32
+            buy-price: 50
+            sell-price: 30
+          - item: STONE_BRICK_STAIRS
+            amount: 16
+            buy-price: 38
+            sell-price: 22
+          - item: STONE_BRICK_SLAB
+            amount: 24
+            buy-price: 34
+            sell-price: 20
+          - item: STONE_BRICK_WALL
+            amount: 16
+            buy-price: 36
+            sell-price: 20
+      mossy_stone_bricks:
+        display-name: '&2Briques moussues'
+        icon: MOSSY_STONE_BRICKS
+        items:
+          - item: MOSSY_STONE_BRICKS
+            amount: 32
+            buy-price: 56
+            sell-price: 32
+          - item: MOSSY_STONE_BRICK_STAIRS
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+          - item: MOSSY_STONE_BRICK_SLAB
+            amount: 24
+            buy-price: 36
+            sell-price: 20
+          - item: MOSSY_STONE_BRICK_WALL
+            amount: 16
+            buy-price: 42
+            sell-price: 24
+      deepslate:
+        display-name: '&8Ardoise'
+        icon: COBBLED_DEEPSLATE
+        items:
+          - item: COBBLED_DEEPSLATE
+            amount: 32
+            buy-price: 54
+            sell-price: 32
+          - item: COBBLED_DEEPSLATE_STAIRS
+            amount: 16
+            buy-price: 38
+            sell-price: 22
+          - item: COBBLED_DEEPSLATE_SLAB
+            amount: 24
+            buy-price: 34
+            sell-price: 20
+          - item: COBBLED_DEEPSLATE_WALL
+            amount: 16
+            buy-price: 38
+            sell-price: 22
+          - item: POLISHED_DEEPSLATE
+            amount: 32
+            buy-price: 58
+            sell-price: 34
+      blackstone:
+        display-name: '&0Roche noire'
+        icon: BLACKSTONE
+        items:
+          - item: BLACKSTONE
+            amount: 32
+            buy-price: 58
+            sell-price: 34
+          - item: BLACKSTONE_STAIRS
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+          - item: BLACKSTONE_SLAB
+            amount: 24
+            buy-price: 36
+            sell-price: 20
+          - item: BLACKSTONE_WALL
+            amount: 16
+            buy-price: 40
+            sell-price: 24
+          - item: POLISHED_BLACKSTONE
+            amount: 32
+            buy-price: 60
+            sell-price: 36
+      bricks:
+        display-name: '&cBriques'
+        icon: BRICKS
+        items:
+          - item: BRICKS
+            amount: 32
+            buy-price: 60
+            sell-price: 36
+          - item: BRICK_STAIRS
+            amount: 16
+            buy-price: 42
+            sell-price: 26
+          - item: BRICK_SLAB
+            amount: 24
+            buy-price: 38
+            sell-price: 22
+          - item: BRICK_WALL
+            amount: 16
+            buy-price: 42
+            sell-price: 26
+      sandstone:
+        display-name: '&eGrès'
+        icon: SANDSTONE
+        items:
+          - item: SANDSTONE
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: SMOOTH_SANDSTONE
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: SANDSTONE_STAIRS
+            amount: 16
+            buy-price: 36
+            sell-price: 20
+          - item: SANDSTONE_SLAB
+            amount: 24
+            buy-price: 32
+            sell-price: 18
+      quartz:
+        display-name: '&fQuartz'
+        icon: QUARTZ_BLOCK
+        items:
+          - item: QUARTZ_BLOCK
+            amount: 32
+            buy-price: 72
+            sell-price: 44
+          - item: QUARTZ_PILLAR
+            amount: 32
+            buy-price: 74
+            sell-price: 44
+          - item: QUARTZ_STAIRS
+            amount: 16
+            buy-price: 46
+            sell-price: 26
+          - item: QUARTZ_SLAB
+            amount: 24
+            buy-price: 40
+            sell-price: 22
+      oak:
+        display-name: '&6Chêne'
+        icon: OAK_LOG
+        items:
+          - item: OAK_LOG
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: STRIPPED_OAK_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: OAK_WOOD
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: OAK_PLANKS
+            amount: 32
+            buy-price: 40
+            sell-price: 24
+          - item: OAK_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: OAK_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      spruce:
+        display-name: '&6Sapin'
+        icon: SPRUCE_LOG
+        items:
+          - item: SPRUCE_LOG
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: STRIPPED_SPRUCE_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: SPRUCE_WOOD
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: SPRUCE_PLANKS
+            amount: 32
+            buy-price: 40
+            sell-price: 24
+          - item: SPRUCE_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: SPRUCE_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      birch:
+        display-name: '&eBouleau'
+        icon: BIRCH_LOG
+        items:
+          - item: BIRCH_LOG
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: STRIPPED_BIRCH_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: BIRCH_WOOD
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: BIRCH_PLANKS
+            amount: 32
+            buy-price: 40
+            sell-price: 24
+          - item: BIRCH_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: BIRCH_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      jungle:
+        display-name: '&6Acajou'
+        icon: JUNGLE_LOG
+        items:
+          - item: JUNGLE_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: STRIPPED_JUNGLE_LOG
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: JUNGLE_WOOD
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: JUNGLE_PLANKS
+            amount: 32
+            buy-price: 42
+            sell-price: 24
+          - item: JUNGLE_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: JUNGLE_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      acacia:
+        display-name: '&6Acacia'
+        icon: ACACIA_LOG
+        items:
+          - item: ACACIA_LOG
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: STRIPPED_ACACIA_LOG
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: ACACIA_WOOD
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: ACACIA_PLANKS
+            amount: 32
+            buy-price: 42
+            sell-price: 24
+          - item: ACACIA_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: ACACIA_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      dark_oak:
+        display-name: '&6Chêne noir'
+        icon: DARK_OAK_LOG
+        items:
+          - item: DARK_OAK_LOG
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: STRIPPED_DARK_OAK_LOG
+            amount: 32
+            buy-price: 50
+            sell-price: 28
+          - item: DARK_OAK_WOOD
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: DARK_OAK_PLANKS
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: DARK_OAK_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: DARK_OAK_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16
+      mangrove:
+        display-name: '&cPalétuvier'
+        icon: MANGROVE_LOG
+        items:
+          - item: MANGROVE_LOG
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: STRIPPED_MANGROVE_LOG
+            amount: 32
+            buy-price: 50
+            sell-price: 28
+          - item: MANGROVE_WOOD
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: MANGROVE_PLANKS
+            amount: 32
+            buy-price: 44
+            sell-price: 26
+          - item: MANGROVE_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: MANGROVE_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16
+      cherry:
+        display-name: '&dCerisier'
+        icon: CHERRY_LOG
+        items:
+          - item: CHERRY_LOG
+            amount: 32
+            buy-price: 50
+            sell-price: 28
+          - item: STRIPPED_CHERRY_LOG
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: CHERRY_WOOD
+            amount: 32
+            buy-price: 50
+            sell-price: 28
+          - item: CHERRY_PLANKS
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: CHERRY_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: CHERRY_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16
+      bamboo:
+        display-name: '&aBambou'
+        icon: BAMBOO_BLOCK
+        items:
+          - item: BAMBOO_BLOCK
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: STRIPPED_BAMBOO_BLOCK
+            amount: 32
+            buy-price: 48
+            sell-price: 28
+          - item: BAMBOO_PLANKS
+            amount: 32
+            buy-price: 42
+            sell-price: 24
+          - item: BAMBOO_STAIRS
+            amount: 16
+            buy-price: 30
+            sell-price: 18
+          - item: BAMBOO_SLAB
+            amount: 24
+            buy-price: 26
+            sell-price: 14
+      crimson:
+        display-name: '&5Cramoisie'
+        icon: CRIMSON_STEM
+        items:
+          - item: CRIMSON_STEM
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: STRIPPED_CRIMSON_STEM
+            amount: 32
+            buy-price: 54
+            sell-price: 32
+          - item: CRIMSON_HYPHAE
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: CRIMSON_PLANKS
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: CRIMSON_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: CRIMSON_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16
+      warped:
+        display-name: '&3Tordue'
+        icon: WARPED_STEM
+        items:
+          - item: WARPED_STEM
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: STRIPPED_WARPED_STEM
+            amount: 32
+            buy-price: 54
+            sell-price: 32
+          - item: WARPED_HYPHAE
+            amount: 32
+            buy-price: 52
+            sell-price: 30
+          - item: WARPED_PLANKS
+            amount: 32
+            buy-price: 46
+            sell-price: 26
+          - item: WARPED_STAIRS
+            amount: 16
+            buy-price: 32
+            sell-price: 18
+          - item: WARPED_SLAB
+            amount: 24
+            buy-price: 28
+            sell-price: 16
