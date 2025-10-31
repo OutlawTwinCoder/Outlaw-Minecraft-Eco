@@ -89,13 +89,13 @@ public class EconomyManager implements EconomyService, Listener {
 
     public void deposit(Player player, double amount) {
         deposit(player.getUniqueId(), amount);
-        player.sendMessage("§aVous avez reçu §e" + String.format("%.2f", amount) + "§a.");
+        player.sendMessage("§aVous avez reçu §e" + format(amount) + "§a.");
     }
 
     public boolean withdraw(Player player, double amount) {
         boolean success = withdraw(player.getUniqueId(), amount);
         if (success) {
-            player.sendMessage("§c" + String.format("%.2f", amount) + " a été retiré de votre compte.");
+            player.sendMessage("§c" + format(amount) + " a été retiré de votre compte.");
         }
         return success;
     }
@@ -143,6 +143,18 @@ public class EconomyManager implements EconomyService, Listener {
     @Override
     public boolean has(UUID playerId, double amount) {
         return getBalance(playerId) >= amount;
+    }
+
+    public Map<UUID, Double> getAllBalances() {
+        synchronized (balances) {
+            return Collections.unmodifiableMap(new HashMap<>(balances));
+        }
+    }
+
+    public String format(double amount) {
+        synchronized (decimalFormat) {
+            return decimalFormat.format(amount);
+        }
     }
 
     @EventHandler
