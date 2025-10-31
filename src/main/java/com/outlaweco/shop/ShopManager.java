@@ -27,9 +27,12 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionType;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +49,38 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private static final String GENERAL_TEMPLATE_KEY = "general";
     private static final String GENERAL_DISPLAY_NAME = "§2Magasin général";
     private static final double SHOP_NAME_VIEW_DISTANCE_SQUARED = 25 * 25;
+    private static final Map<String, PotionType> POTION_TYPE_ALIASES = createPotionAliasMap();
+    private static final Map<PotionType, String> POTION_TYPE_NAMES = createPotionNameMap();
+
+    private static Map<String, PotionType> createPotionAliasMap() {
+        Map<String, PotionType> map = new HashMap<>();
+        for (PotionType type : PotionType.values()) {
+            map.put(type.name(), type);
+        }
+        map.put("SWIFTNESS", PotionType.SPEED);
+        map.put("SPEED", PotionType.SPEED);
+        map.put("HEALING", PotionType.INSTANT_HEAL);
+        map.put("HARMING", PotionType.INSTANT_DAMAGE);
+        map.put("LEAPING", PotionType.JUMP);
+        map.put("JUMP", PotionType.JUMP);
+        map.put("REGENERATION", PotionType.REGEN);
+        map.put("REGEN", PotionType.REGEN);
+        map.put("SLOW", PotionType.SLOWNESS);
+        return map;
+    }
+
+    private static Map<PotionType, String> createPotionNameMap() {
+        Map<PotionType, String> map = new EnumMap<>(PotionType.class);
+        for (PotionType type : PotionType.values()) {
+            map.put(type, type.name());
+        }
+        map.put(PotionType.SPEED, "SWIFTNESS");
+        map.put(PotionType.INSTANT_HEAL, "HEALING");
+        map.put(PotionType.INSTANT_DAMAGE, "HARMING");
+        map.put(PotionType.JUMP, "LEAPING");
+        map.put(PotionType.REGEN, "REGENERATION");
+        return map;
+    }
 
     private final OutlawEconomyPlugin plugin;
     private final EconomyManager economyManager;
@@ -55,6 +90,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private FileConfiguration templatesConfig;
     private final File generalShopFile;
     private FileConfiguration generalShopConfig;
+    private final File shopSettingsFile;
+    private FileConfiguration shopSettingsConfig;
     private final NamespacedKey shopKey;
     private final Map<UUID, Shop> shops = new HashMap<>();
     private final Map<String, ShopTemplate> templates = new HashMap<>();
@@ -62,6 +99,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private final Map<UUID, PendingPriceInput> pendingPriceInputs = new HashMap<>();
     private final Map<UUID, PendingListingInput> pendingListingInputs = new HashMap<>();
     private final List<Material> selectableMaterials;
+    private final Map<String, Double> templateMultipliers = new HashMap<>();
     private BukkitTask nameVisibilityTask;
 
     public ShopManager(OutlawEconomyPlugin plugin) {
@@ -106,7 +144,19 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
         this.generalShopConfig = YamlConfiguration.loadConfiguration(generalShopFile);
 
+        this.shopSettingsFile = new File(plugin.getDataFolder(), "shop-settings.yml");
+        if (!shopSettingsFile.exists()) {
+            try {
+                shopSettingsFile.getParentFile().mkdirs();
+                shopSettingsFile.createNewFile();
+            } catch (IOException e) {
+                plugin.getLogger().severe("Impossible de créer shop-settings.yml: " + e.getMessage());
+            }
+        }
+        this.shopSettingsConfig = YamlConfiguration.loadConfiguration(shopSettingsFile);
+
         loadTemplates();
+        loadPriceMultipliers();
         loadShops();
         loadGeneralStore();
         startNameVisibilityTask();
@@ -175,21 +225,36 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
-    private void parseOffer(String context, List<ShopOffer> offers, Map<?, ?> entry) {
-        String materialName = Objects.toString(entry.get("item"), "");
-        Material material = Material.matchMaterial(materialName);
-        if (material == null) {
-            plugin.getLogger().warning("Matériau invalide '" + materialName + "' pour " + context);
+    private void loadPriceMultipliers() {
+        templateMultipliers.clear();
+        if (shopSettingsConfig == null) {
             return;
         }
-        int amount = 1;
-        Object amountObj = entry.get("amount");
-        if (amountObj instanceof Number number) {
-            amount = Math.max(1, number.intValue());
+        ConfigurationSection section = shopSettingsConfig.getConfigurationSection("price-multipliers");
+        if (section == null) {
+            return;
+        }
+        for (String key : section.getKeys(false)) {
+            double value = section.getDouble(key, 1.0);
+            if (value <= 0) {
+                plugin.getLogger().warning("Multiplicateur invalide pour le template '" + key + "'.");
+                continue;
+            }
+            String normalized = key.toLowerCase(Locale.ROOT);
+            if (!templates.containsKey(normalized)) {
+                plugin.getLogger().warning("Multiplicateur défini pour un template inconnu: " + key);
+            }
+            templateMultipliers.put(normalized, value);
+        }
+    }
+
+    private void parseOffer(String context, List<ShopOffer> offers, Map<?, ?> entry) {
+        ItemStack stack = createItemStack(context, entry);
+        if (stack == null) {
+            return;
         }
         double buyPrice = getDouble(entry.get("buy-price"), 0.0);
         double sellPrice = getDouble(entry.get("sell-price"), 0.0);
-        ItemStack stack = new ItemStack(material, amount);
         offers.add(new ShopOffer(stack, buyPrice, sellPrice));
     }
 
@@ -201,6 +266,75 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return value != null ? Double.parseDouble(value.toString()) : def;
         } catch (NumberFormatException ex) {
             return def;
+        }
+    }
+
+    private ItemStack createItemStack(String context, Map<?, ?> entry) {
+        String rawName = Objects.toString(entry.get("item"), "").trim();
+        if (rawName.isEmpty()) {
+            plugin.getLogger().warning("Objet manquant pour " + context);
+            return null;
+        }
+        int amount = 1;
+        Object amountObj = entry.get("amount");
+        if (amountObj instanceof Number number) {
+            amount = Math.max(1, number.intValue());
+        }
+        ItemStack potionStack = createPotionItem(context, rawName, amount);
+        if (potionStack != null) {
+            return potionStack;
+        }
+        Material material = Material.matchMaterial(rawName);
+        if (material == null) {
+            plugin.getLogger().warning("Matériau invalide '" + rawName + "' pour " + context);
+            return null;
+        }
+        return new ItemStack(material, amount);
+    }
+
+    private ItemStack createPotionItem(String context, String rawName, int amount) {
+        PotionDescriptor descriptor = PotionDescriptor.fromString(rawName);
+        if (descriptor == null) {
+            return null;
+        }
+        PotionType type = matchPotionType(descriptor.typeKey());
+        if (type == null) {
+            plugin.getLogger().warning("Type de potion invalide '" + rawName + "' pour " + context);
+            return null;
+        }
+        ItemStack stack = new ItemStack(descriptor.material(), amount);
+        ItemMeta meta = stack.getItemMeta();
+        if (!(meta instanceof PotionMeta potionMeta)) {
+            return stack;
+        }
+        boolean extended = descriptor.modifier() == PotionModifier.LONG;
+        boolean upgraded = descriptor.modifier() == PotionModifier.STRONG;
+        if (extended && !type.isExtendable()) {
+            plugin.getLogger().warning("La potion '" + rawName + "' ne peut pas être prolongée. Suffixe ignoré.");
+            extended = false;
+        }
+        if (upgraded && !type.isUpgradeable()) {
+            plugin.getLogger().warning("La potion '" + rawName + "' ne peut pas être améliorée. Suffixe ignoré.");
+            upgraded = false;
+        }
+        potionMeta.setBasePotionData(new PotionData(type, extended, upgraded));
+        stack.setItemMeta(potionMeta);
+        return stack;
+    }
+
+    private PotionType matchPotionType(String typeKey) {
+        if (typeKey == null || typeKey.isBlank()) {
+            return null;
+        }
+        String normalized = typeKey.toUpperCase(Locale.ROOT);
+        PotionType type = POTION_TYPE_ALIASES.get(normalized);
+        if (type != null) {
+            return type;
+        }
+        try {
+            return PotionType.valueOf(normalized);
+        } catch (IllegalArgumentException ex) {
+            return null;
         }
     }
 
@@ -378,6 +512,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§e/shop removeitem <template> <item>§7 - retirer un objet");
             player.sendMessage("§e/shop reloadtemplates§7 - recharger les templates");
             player.sendMessage("§e/shop setting price§7 - définir les prix via le menu créatif");
+            player.sendMessage("§e/shop setting overallprice <template> <multiplicateur|reset>§7 - ajuster tous les prix d'une boutique");
         }
     }
 
@@ -600,6 +735,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
         this.templatesConfig = YamlConfiguration.loadConfiguration(templatesFile);
         loadTemplates();
+        loadPriceMultipliers();
         updateVillagers();
         player.sendMessage("§aTemplates rechargés.");
         return true;
@@ -610,13 +746,69 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§cVous n'avez pas la permission.");
             return true;
         }
-        if (args.length < 2 || !args[1].equalsIgnoreCase("price")) {
-            player.sendMessage("§cUsage: /shop setting price");
+        if (args.length < 2) {
+            sendSettingUsage(player);
             return true;
         }
-        pendingPriceInputs.remove(player.getUniqueId());
-        openPriceSelector(player, 0);
-        player.sendMessage("§7Sélectionnez un objet puis indiquez son prix dans le chat. Tapez 'cancel' pour annuler.");
+        String option = args[1].toLowerCase(Locale.ROOT);
+        switch (option) {
+            case "price":
+                pendingPriceInputs.remove(player.getUniqueId());
+                openPriceSelector(player, 0);
+                player.sendMessage("§7Sélectionnez un objet puis indiquez son prix dans le chat. Tapez 'cancel' pour annuler.");
+                return true;
+            case "overallprice":
+                return handleOverallPriceSetting(player, args);
+            default:
+                sendSettingUsage(player);
+                return true;
+        }
+    }
+
+    private void sendSettingUsage(Player player) {
+        player.sendMessage("§cUsage: /shop setting price");
+        player.sendMessage("§cUsage: /shop setting overallprice <template> <multiplicateur|reset>");
+    }
+
+    private boolean handleOverallPriceSetting(Player player, String[] args) {
+        if (args.length < 4) {
+            player.sendMessage("§cUsage: /shop setting overallprice <template> <multiplicateur|reset>");
+            return true;
+        }
+        String templateKey = args[2].toLowerCase(Locale.ROOT);
+        ShopTemplate template = templates.get(templateKey);
+        if (template == null) {
+            player.sendMessage("§cTemplate introuvable.");
+            return true;
+        }
+        String displayName = ChatColor.stripColor(template.getDisplayName());
+        if (displayName == null || displayName.isBlank()) {
+            displayName = templateKey;
+        }
+        String valueArg = args[3];
+        if (valueArg.equalsIgnoreCase("reset")) {
+            boolean removed = resetTemplatePriceMultiplier(templateKey);
+            if (removed) {
+                player.sendMessage("§aMultiplicateur réinitialisé pour §e" + displayName + "§a.");
+            } else {
+                player.sendMessage("§7Ce template utilise déjà les prix par défaut.");
+            }
+            return true;
+        }
+        double value;
+        try {
+            value = Double.parseDouble(valueArg.replace(',', '.'));
+        } catch (NumberFormatException ex) {
+            player.sendMessage("§cValeur invalide. Entrez un nombre.");
+            return true;
+        }
+        if (value <= 0) {
+            player.sendMessage("§cLe multiplicateur doit être supérieur à 0.");
+            return true;
+        }
+        setTemplatePriceMultiplier(templateKey, value);
+        player.sendMessage("§aMultiplicateur de prix pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+        player.sendMessage("§7Réouvrez la boutique pour voir les nouveaux prix.");
         return true;
     }
 
@@ -764,8 +956,12 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         int size = calculateInventorySize(Math.max(1, offers.size() + extraSlots));
         int maxSlots = backButton ? size - 1 : size;
         List<ShopOffer> visibleOffers = new ArrayList<>();
+        double multiplier = getPriceMultiplier(template.getKey());
         for (int i = 0; i < offers.size() && i < maxSlots; i++) {
-            visibleOffers.add(offers.get(i));
+            ShopOffer offer = offers.get(i);
+            double buyPrice = applyMultiplier(offer.buyPrice(), multiplier);
+            double sellPrice = applyMultiplier(offer.sellPrice(), multiplier);
+            visibleOffers.add(new ShopOffer(offer.item(), buyPrice, sellPrice));
         }
         ShopInventoryHolder holder = ShopInventoryHolder.forOffers(template.getKey(),
                 category != null ? category.getKey() : null, visibleOffers, backButton);
@@ -1400,7 +1596,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 return filterByPrefix(List.of("itemshop"), args[1]);
             }
             if (isAdmin && args[0].equalsIgnoreCase("setting")) {
-                return filterByPrefix(List.of("price"), args[1]);
+                return filterByPrefix(List.of("price", "overallprice"), args[1]);
             }
         }
 
@@ -1410,6 +1606,15 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             }
             if (args[0].equalsIgnoreCase("open") && canUseCommand && canInteract && args[1].equalsIgnoreCase("shop")) {
                 return filterByPrefix(List.of("general"), args[2]);
+            }
+            if (isAdmin && args[0].equalsIgnoreCase("setting") && args[1].equalsIgnoreCase("overallprice")) {
+                return filterByPrefix(templates.keySet(), args[2]);
+            }
+        }
+
+        if (args.length == 4) {
+            if (isAdmin && args[0].equalsIgnoreCase("setting") && args[1].equalsIgnoreCase("overallprice")) {
+                return filterByPrefix(List.of("reset", "1", "1.5", "2", "2.3", "2.5"), args[3]);
             }
         }
 
@@ -1463,6 +1668,79 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
+    private double getPriceMultiplier(String templateKey) {
+        if (templateKey == null) {
+            return 1.0;
+        }
+        return templateMultipliers.getOrDefault(templateKey.toLowerCase(Locale.ROOT), 1.0);
+    }
+
+    private void setTemplatePriceMultiplier(String templateKey, double multiplier) {
+        String normalized = templateKey.toLowerCase(Locale.ROOT);
+        if (Math.abs(multiplier - 1.0) < 1.0E-6) {
+            templateMultipliers.remove(normalized);
+        } else {
+            templateMultipliers.put(normalized, multiplier);
+        }
+        savePriceMultipliers();
+    }
+
+    private boolean resetTemplatePriceMultiplier(String templateKey) {
+        boolean removed = templateMultipliers.remove(templateKey.toLowerCase(Locale.ROOT)) != null;
+        savePriceMultipliers();
+        return removed;
+    }
+
+    private void savePriceMultipliers() {
+        if (shopSettingsConfig == null) {
+            shopSettingsConfig = new YamlConfiguration();
+        }
+        shopSettingsConfig.set("price-multipliers", null);
+        for (Map.Entry<String, Double> entry : templateMultipliers.entrySet()) {
+            shopSettingsConfig.set("price-multipliers." + entry.getKey(), entry.getValue());
+        }
+        try {
+            shopSettingsConfig.save(shopSettingsFile);
+        } catch (IOException e) {
+            plugin.getLogger().severe("Impossible d'enregistrer shop-settings.yml: " + e.getMessage());
+        }
+    }
+
+    private double applyMultiplier(double basePrice, double multiplier) {
+        if (basePrice == 0) {
+            return 0;
+        }
+        return roundPrice(basePrice * multiplier);
+    }
+
+    private double roundPrice(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    private String serializeItemStack(ItemStack item) {
+        Material type = item.getType();
+        if (type == Material.POTION || type == Material.SPLASH_POTION || type == Material.LINGERING_POTION) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta instanceof PotionMeta potionMeta) {
+                PotionData data = potionMeta.getBasePotionData();
+                if (data != null) {
+                    String prefix = type == Material.POTION ? "POTION"
+                            : type == Material.SPLASH_POTION ? "SPLASH_POTION" : "LINGERING_POTION";
+                    PotionType potionType = data.getType();
+                    String baseName = POTION_TYPE_NAMES.getOrDefault(potionType, potionType.name());
+                    String suffix = "";
+                    if (data.isExtended()) {
+                        suffix = "_LONG";
+                    } else if (data.isUpgraded()) {
+                        suffix = "_STRONG";
+                    }
+                    return prefix + "_" + baseName + suffix;
+                }
+            }
+        }
+        return type.name();
+    }
+
     private record PendingPriceInput(Material material, int page) {
     }
 
@@ -1483,7 +1761,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             List<Map<String, Object>> items = new ArrayList<>();
             for (ShopOffer offer : template.getOffers()) {
                 Map<String, Object> map = new LinkedHashMap<>();
-                map.put("item", offer.getMaterial().name());
+                ItemStack item = offer.item();
+                map.put("item", serializeItemStack(item));
                 map.put("amount", offer.getAmount());
                 map.put("buy-price", offer.buyPrice());
                 map.put("sell-price", offer.sellPrice());
@@ -1503,7 +1782,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                     List<Map<String, Object>> categoryItems = new ArrayList<>();
                     for (ShopOffer offer : category.getOffers()) {
                         Map<String, Object> map = new LinkedHashMap<>();
-                        map.put("item", offer.getMaterial().name());
+                        ItemStack item = offer.item();
+                        map.put("item", serializeItemStack(item));
                         map.put("amount", offer.getAmount());
                         map.put("buy-price", offer.buyPrice());
                         map.put("sell-price", offer.sellPrice());
@@ -1518,6 +1798,56 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             this.templatesConfig = config;
         } catch (IOException e) {
             plugin.getLogger().severe("Impossible d'enregistrer shop-templates.yml: " + e.getMessage());
+        }
+    }
+
+    private enum PotionModifier {
+        NONE,
+        LONG,
+        STRONG
+    }
+
+    private record PotionDescriptor(Material material, String typeKey, PotionModifier modifier) {
+        private PotionDescriptor {
+            Objects.requireNonNull(material, "material");
+            Objects.requireNonNull(typeKey, "typeKey");
+            Objects.requireNonNull(modifier, "modifier");
+        }
+
+        static PotionDescriptor fromString(String rawName) {
+            if (rawName == null) {
+                return null;
+            }
+            String upper = rawName.trim().toUpperCase(Locale.ROOT);
+            if (upper.isEmpty()) {
+                return null;
+            }
+            PotionModifier modifier = PotionModifier.NONE;
+            if (upper.endsWith("_LONG")) {
+                modifier = PotionModifier.LONG;
+                upper = upper.substring(0, upper.length() - 5);
+            } else if (upper.endsWith("_STRONG")) {
+                modifier = PotionModifier.STRONG;
+                upper = upper.substring(0, upper.length() - 7);
+            }
+            Material material;
+            String typeKey;
+            if (upper.startsWith("SPLASH_POTION_")) {
+                material = Material.SPLASH_POTION;
+                typeKey = upper.substring("SPLASH_POTION_".length());
+            } else if (upper.startsWith("LINGERING_POTION_")) {
+                material = Material.LINGERING_POTION;
+                typeKey = upper.substring("LINGERING_POTION_".length());
+            } else if (upper.startsWith("POTION_")) {
+                material = Material.POTION;
+                typeKey = upper.substring("POTION_".length());
+            } else {
+                return null;
+            }
+            if (typeKey.isEmpty()) {
+                return null;
+            }
+            return new PotionDescriptor(material, typeKey, modifier);
         }
     }
 }
