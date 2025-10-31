@@ -1973,16 +1973,16 @@ templates:
       sell-price: 12.0
     - item: IRON_SWORD
       amount: 1
-      buy-price: 90
-      sell-price: 36.0
+      buy-price: 67.5
+      sell-price: 27.0
     - item: GOLDEN_SWORD
       amount: 1
-      buy-price: 120
-      sell-price: 48.0
+      buy-price: 90.0
+      sell-price: 36.0
     - item: DIAMOND_SWORD
       amount: 1
-      buy-price: 450
-      sell-price: 180.0
+      buy-price: 337.5
+      sell-price: 135.0
     - item: NETHERITE_SWORD
       amount: 1
       buy-price: 12150
@@ -2016,108 +2016,127 @@ templates:
     items:
     - item: LEATHER_HELMET
       amount: 1
-      buy-price: 90
-      sell-price: 36.0
+      buy-price: 81.0
+      sell-price: 32.0
     - item: LEATHER_CHESTPLATE
       amount: 1
-      buy-price: 150
-      sell-price: 60.0
+      buy-price: 140.5
+      sell-price: 56.0
     - item: LEATHER_LEGGINGS
       amount: 1
-      buy-price: 120
-      sell-price: 48.0
+      buy-price: 111.0
+      sell-price: 44.5
     - item: LEATHER_BOOTS
       amount: 1
-      buy-price: 90
-      sell-price: 36.0
+      buy-price: 78.5
+      sell-price: 31.5
     - item: CHAINMAIL_HELMET
       amount: 1
-      buy-price: 210
-      sell-price: 84.0
+      buy-price: 189.0
+      sell-price: 75.5
     - item: CHAINMAIL_CHESTPLATE
       amount: 1
-      buy-price: 330
-      sell-price: 132.0
+      buy-price: 309.0
+      sell-price: 123.5
     - item: CHAINMAIL_LEGGINGS
       amount: 1
-      buy-price: 270
-      sell-price: 108.0
+      buy-price: 250.5
+      sell-price: 100.0
     - item: CHAINMAIL_BOOTS
       amount: 1
-      buy-price: 210
-      sell-price: 84.0
+      buy-price: 183.5
+      sell-price: 73.5
     - item: IRON_HELMET
       amount: 1
-      buy-price: 180
-      sell-price: 72.0
+      buy-price: 162.0
+      sell-price: 64.5
     - item: IRON_CHESTPLATE
       amount: 1
-      buy-price: 300
-      sell-price: 120.0
+      buy-price: 281.0
+      sell-price: 112.5
     - item: IRON_LEGGINGS
       amount: 1
-      buy-price: 240
-      sell-price: 96.0
+      buy-price: 222.5
+      sell-price: 89.0
     - item: IRON_BOOTS
       amount: 1
-      buy-price: 180
-      sell-price: 72.0
+      buy-price: 157.5
+      sell-price: 63.0
     - item: GOLDEN_HELMET
       amount: 1
-      buy-price: 240
-      sell-price: 96.0
+      buy-price: 216.0
+      sell-price: 86.0
     - item: GOLDEN_CHESTPLATE
       amount: 1
-      buy-price: 360
-      sell-price: 144.0
+      buy-price: 337.5
+      sell-price: 135.0
     - item: GOLDEN_LEGGINGS
       amount: 1
-      buy-price: 300
-      sell-price: 120.0
+      buy-price: 278.5
+      sell-price: 111.0
     - item: GOLDEN_BOOTS
       amount: 1
-      buy-price: 240
-      sell-price: 96.0
+      buy-price: 210.0
+      sell-price: 84.0
     - item: DIAMOND_HELMET
       amount: 1
-      buy-price: 1050
-      sell-price: 420.0
+      buy-price: 945.0
+      sell-price: 378.0
     - item: DIAMOND_CHESTPLATE
       amount: 1
-      buy-price: 1650
-      sell-price: 660.0
+      buy-price: 1546.5
+      sell-price: 618.5
     - item: DIAMOND_LEGGINGS
       amount: 1
-      buy-price: 1425
-      sell-price: 570.0
+      buy-price: 1323.0
+      sell-price: 529.0
     - item: DIAMOND_BOOTS
       amount: 1
-      buy-price: 840
-      sell-price: 336.0
+      buy-price: 735.0
+      sell-price: 294.0
     - item: NETHERITE_HELMET
       amount: 1
-      buy-price: 12450
-      sell-price: 4980.0
+      buy-price: 11205.0
+      sell-price: 4482.0
     - item: NETHERITE_CHESTPLATE
       amount: 1
-      buy-price: 12900
-      sell-price: 5160.0
+      buy-price: 12093.5
+      sell-price: 4837.5
     - item: NETHERITE_LEGGINGS
       amount: 1
-      buy-price: 12675
-      sell-price: 5070.0
+      buy-price: 11769.5
+      sell-price: 4707.5
     - item: NETHERITE_BOOTS
       amount: 1
-      buy-price: 12090
-      sell-price: 4836.0
+      buy-price: 10578.5
+      sell-price: 4231.5
     - item: TURTLE_HELMET
       amount: 1
-      buy-price: 600
-      sell-price: 240.0
+      buy-price: 540.0
+      sell-price: 216.0
     - item: ELYTRA
       amount: 1
       buy-price: 9600
       sell-price: 3840.0
+  potions:
+    display-name: '&5Boutique de potions'
+    items:
+    - item: POTION
+      amount: 1
+      buy-price: 500.0
+      sell-price: 200.0
+    - item: SPLASH_POTION
+      amount: 1
+      buy-price: 550.0
+      sell-price: 220.0
+    - item: LINGERING_POTION
+      amount: 1
+      buy-price: 650.0
+      sell-price: 260.0
+    - item: TIPPED_ARROW
+      amount: 16
+      buy-price: 520.0
+      sell-price: 208.0
     - item: LEATHER_HORSE_ARMOR
       amount: 1
       buy-price: 300
