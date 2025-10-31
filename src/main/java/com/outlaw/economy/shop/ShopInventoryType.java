@@ -1,4 +1,4 @@
-package com.outlaweco.shop;
+package com.outlaw.economy.shop;
 
 public enum ShopInventoryType {
     CATEGORIES,

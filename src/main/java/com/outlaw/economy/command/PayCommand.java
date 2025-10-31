@@ -1,6 +1,6 @@
-package com.outlaweco.economy.command;
+package com.outlaw.economy.command;
 
-import com.outlaweco.economy.EconomyManager;
+import com.outlaw.economy.core.EconomyManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -57,15 +57,16 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         }
 
         UUID playerId = player.getUniqueId();
-        if (!economyManager.withdraw(playerId, amount)) {
+        if (!economyManager.withdraw(playerId, amount, "Pay to " + target.getName())) {
             sender.sendMessage("§cVous n'avez pas assez d'argent.");
             return true;
         }
 
-        economyManager.deposit(target.getUniqueId(), amount);
+        economyManager.deposit(target.getUniqueId(), amount, "Payment from " + player.getName());
 
-        player.sendMessage("§aVous avez envoyé §e" + String.format("%.2f", amount) + "§a à §e" + target.getName());
-        target.sendMessage("§aVous avez reçu §e" + String.format("%.2f", amount) + "§a de §e" + player.getName());
+        String formattedAmount = economyManager.format(amount);
+        player.sendMessage("§aVous avez envoyé §e" + formattedAmount + "§a à §e" + target.getName());
+        target.sendMessage("§aVous avez reçu §e" + formattedAmount + "§a de §e" + player.getName());
         return true;
     }
 

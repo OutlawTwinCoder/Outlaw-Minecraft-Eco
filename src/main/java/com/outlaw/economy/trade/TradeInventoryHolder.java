@@ -1,4 +1,4 @@
-package com.outlaweco.trade;
+package com.outlaw.economy.trade;
 
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;

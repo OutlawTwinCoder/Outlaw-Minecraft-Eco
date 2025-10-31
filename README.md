@@ -51,7 +51,7 @@ Plugin Paper/Spigot pour offrir un système d'économie centralisé avec boutiqu
 ```yaml
 economy:
   starting-balance: 100.0   # argent initial pour les nouveaux joueurs
-  currency-name: "OutlawCoin"
+  currency-name: "$"
 trade:
   request-timeout: 30       # durée (secondes) des demandes d'échange
 ```
@@ -61,24 +61,23 @@ Deux approches sont possibles pour interagir avec l'économie depuis un autre pl
 
 ### 1. Utiliser l'API statique
 ```java
-import com.outlaweco.api.EconomyAPI;
+import com.outlaw.economy.api.EconomyAPI;
 
 UUID joueur = ...;
-EconomyAPI.deposit(joueur, 250.0);          // ajoute 250 OutlawCoin
-boolean ok = EconomyAPI.withdraw(joueur, 50.0); // retire 50 (false si solde insuffisant)
+EconomyAPI.deposit(joueur, 250.0, "Récompense de quête");          // ajoute 250 $
+boolean ok = EconomyAPI.withdraw(joueur, 50.0, "Achat boutique"); // retire 50 (false si solde insuffisant)
 double balance = EconomyAPI.getBalance(joueur);
 ```
 
 ### 2. Via le ServicesManager de Bukkit
 ```java
-import com.outlaweco.api.EconomyService;
+import com.outlaw.economy.api.EconomyService;
 import org.bukkit.Bukkit;
 
 EconomyService economy = Bukkit.getServicesManager().load(EconomyService.class);
 if (economy != null) {
     UUID joueur = ...;
-    if (economy.has(joueur, 500.0)) {
-        economy.withdraw(joueur, 500.0);
+    if (economy.withdraw(joueur, 500.0, "Achat territoire")) {
         // ... effectuer l'achat d'un territoire, etc.
     }
 }
@@ -86,12 +85,34 @@ if (economy != null) {
 
 L'interface `EconomyService` expose les méthodes suivantes :
 - `double getBalance(UUID joueur)`
-- `void setBalance(UUID joueur, double montant)`
-- `void deposit(UUID joueur, double montant)`
-- `boolean withdraw(UUID joueur, double montant)`
-- `boolean has(UUID joueur, double montant)`
+- `boolean deposit(UUID joueur, double montant, String raison)`
+- `boolean withdraw(UUID joueur, double montant, String raison)`
+- `String format(double montant)`
+- `String currencyCode()`
 
 Assurez-vous que votre plugin déclare une dépendance vers OutlawEconomy (via `plugin.yml` ou `softdepend`) pour être chargé après celui-ci.
+
+### 3. Compatibilité Vault
+
+OutlawEconomy enregistre automatiquement un pont `net.milkbowl.vault.economy.Economy`. Tant que Vault est installé, tous les plugins compatibles Vault verront OutlawEconomy comme fournisseur d'économie.
+
+Dans votre `pom.xml`, ajoutez la dépendance Vault (scope `provided`) et le dépôt JitPack :
+
+```xml
+<repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+</repository>
+
+<dependency>
+    <groupId>com.github.MilkBowl</groupId>
+    <artifactId>VaultAPI</artifactId>
+    <version>1.7.1</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+Déclarez également `softdepend: [Vault]` dans votre `plugin.yml` pour attendre le chargement de Vault.
 
 ## Utilisation avec des PNJ (FancyNPC)
 

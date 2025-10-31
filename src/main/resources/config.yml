@@ -1,5 +1,5 @@
 economy:
   starting-balance: 100.0
-  currency-name: "OutlawCoin"
+  currency-name: "$"
 trade:
   request-timeout: 30

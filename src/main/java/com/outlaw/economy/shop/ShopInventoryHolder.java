@@ -1,4 +1,4 @@
-package com.outlaweco.shop;
+package com.outlaw.economy.shop;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;

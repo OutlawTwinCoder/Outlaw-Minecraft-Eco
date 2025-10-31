@@ -1,7 +1,7 @@
-package com.outlaweco.shop;
+package com.outlaw.economy.shop;
 
-import com.outlaweco.OutlawEconomyPlugin;
-import com.outlaweco.economy.EconomyManager;
+import com.outlaw.economy.OutlawEconomyPlugin;
+import com.outlaw.economy.core.EconomyManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -1048,9 +1048,10 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
                 List<String> lore = new ArrayList<>();
-                lore.add("§aAchat: §e" + String.format(Locale.US, "%.2f", offer.buyPrice()));
+                String currency = economyManager.currencyCode();
+                lore.add("§aAchat: §e" + formatPrice(offer.buyPrice()) + " " + currency);
                 if (offer.sellPrice() > 0) {
-                    lore.add("§cVente: §e" + String.format(Locale.US, "%.2f", offer.sellPrice()));
+                    lore.add("§cVente: §e" + formatPrice(offer.sellPrice()) + " " + currency);
                     lore.add("§7Clique gauche pour acheter");
                     lore.add("§7Clique droit pour vendre");
                 } else {
@@ -1097,7 +1098,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 List<String> lore = new ArrayList<>();
                 OptionalDouble price = findCurrentBuyPrice(material);
                 if (price.isPresent()) {
-                    lore.add("§7Prix actuel: §e" + String.format(Locale.US, "%.2f", price.getAsDouble()));
+                    lore.add("§7Prix actuel: §e" + formatPrice(price.getAsDouble()) + " " + economyManager.currencyCode());
                 } else {
                     lore.add("§7Aucun prix défini dans les templates");
                 }
@@ -1161,7 +1162,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             if (meta != null) {
                 List<String> lore = new ArrayList<>();
                 lore.add("§7Vendeur: §f" + listing.getSellerName());
-                lore.add("§aPrix: §e" + String.format(Locale.US, "%.2f", listing.getPrice()));
+                String currency = economyManager.currencyCode();
+                lore.add("§aPrix: §e" + formatPrice(listing.getPrice()) + " " + currency);
                 if (listing.getSellerId().equals(player.getUniqueId())) {
                     lore.add("§7Clique pour récupérer l'objet");
                 } else {
@@ -1345,7 +1347,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private void handleBuy(Player player, ShopOffer offer) {
         double price = offer.buyPrice();
-        if (price > 0 && !economyManager.withdraw(player.getUniqueId(), price)) {
+        String itemName = describeItem(offer.item());
+        if (price > 0 && !economyManager.withdraw(player.getUniqueId(), price, "Shop purchase: " + itemName)) {
             player.sendMessage("§cPas assez d'argent.");
             return;
         }
@@ -1354,7 +1357,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             leftovers.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
         }
         if (price > 0) {
-            player.sendMessage("§aAchat effectué pour §e" + String.format(Locale.US, "%.2f", price));
+            player.sendMessage("§aAchat effectué pour §e" + economyManager.format(price) + " " + economyManager.currencyCode());
         } else {
             player.sendMessage("§aAchat effectué.");
         }
@@ -1372,8 +1375,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return;
         }
         removeItems(player.getInventory(), itemToSell);
-        economyManager.deposit(player.getUniqueId(), sellPrice);
-        player.sendMessage("§aVente effectuée pour §e" + String.format(Locale.US, "%.2f", sellPrice));
+        economyManager.deposit(player.getUniqueId(), sellPrice, "Shop sell: " + describeItem(itemToSell));
+        player.sendMessage("§aVente effectuée pour §e" + economyManager.format(sellPrice) + " " + economyManager.currencyCode());
     }
 
     private void removeItems(org.bukkit.inventory.PlayerInventory inventory, ItemStack item) {
@@ -1433,7 +1436,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return;
         }
         double price = current.getPrice();
-        if (!economyManager.withdraw(player.getUniqueId(), price)) {
+        if (!economyManager.withdraw(player.getUniqueId(), price, "Player shop purchase: " + describeItem(current.getItem()))) {
             player.sendMessage("§cPas assez d'argent.");
             return;
         }
@@ -1442,14 +1445,14 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         if (!leftovers.isEmpty()) {
             leftovers.values().forEach(remain -> player.getWorld().dropItemNaturally(player.getLocation(), remain));
         }
-        economyManager.deposit(current.getSellerId(), price);
+        economyManager.deposit(current.getSellerId(), price, "Player shop sale: " + describeItem(item));
         generalListings.remove(current.getId());
         saveGeneralStore();
         String itemName = describeItem(item);
-        player.sendMessage("§aAchat effectué pour §e" + formatPrice(price));
+        player.sendMessage("§aAchat effectué pour §e" + formatPrice(price) + " " + economyManager.currencyCode());
         Player seller = Bukkit.getPlayer(current.getSellerId());
         if (seller != null && seller.isOnline()) {
-            seller.sendMessage("§aVotre annonce pour §6" + itemName + "§a a été vendue pour §e" + formatPrice(price) + "§a.");
+            seller.sendMessage("§aVotre annonce pour §6" + itemName + "§a a été vendue pour §e" + formatPrice(price) + " " + economyManager.currencyCode() + "§a.");
         }
         openGeneralStore(player, normalizeGeneralPage(currentPage));
     }
@@ -1488,7 +1491,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     }
 
     private String formatPrice(double price) {
-        return String.format(Locale.US, "%.2f", price);
+        return economyManager.format(price);
     }
 
     private boolean isCancelMessage(String message) {

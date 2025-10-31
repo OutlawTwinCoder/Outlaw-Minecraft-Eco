@@ -1,6 +1,6 @@
-package com.outlaweco.trade;
+package com.outlaw.economy.trade;
 
-import com.outlaweco.economy.EconomyManager;
+import com.outlaw.economy.core.EconomyManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
