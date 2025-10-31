@@ -1356,131 +1356,131 @@ templates:
     - item: WOODEN_PICKAXE
       amount: 1
       buy-price: 27
-      sell-price: 10.0
+      sell-price: 16.2
     - item: STONE_PICKAXE
       amount: 1
       buy-price: 42
-      sell-price: 16.0
+      sell-price: 25.2
     - item: IRON_PICKAXE
       amount: 1
       buy-price: 105
-      sell-price: 42.0
+      sell-price: 63
     - item: GOLDEN_PICKAXE
       amount: 1
       buy-price: 135
-      sell-price: 54.0
+      sell-price: 81
     - item: DIAMOND_PICKAXE
       amount: 1
-      buy-price: 630
-      sell-price: 252.0
+      buy-price: 69.2
+      sell-price: 41.5
     - item: NETHERITE_PICKAXE
       amount: 1
-      buy-price: 12300
-      sell-price: 4920.0
+      buy-price: 18819.2
+      sell-price: 11291.5
     - item: WOODEN_AXE
       amount: 1
       buy-price: 24
-      sell-price: 9.0
+      sell-price: 14.4
     - item: STONE_AXE
       amount: 1
       buy-price: 39
-      sell-price: 15.0
+      sell-price: 23.4
     - item: IRON_AXE
       amount: 1
       buy-price: 99
-      sell-price: 40.0
+      sell-price: 59.4
     - item: GOLDEN_AXE
       amount: 1
       buy-price: 126
-      sell-price: 50.0
+      sell-price: 75.6
     - item: DIAMOND_AXE
       amount: 1
-      buy-price: 570
-      sell-price: 228.0
+      buy-price: 69.2
+      sell-price: 41.5
     - item: NETHERITE_AXE
       amount: 1
-      buy-price: 12225
-      sell-price: 4890.0
+      buy-price: 18819.2
+      sell-price: 11291.5
     - item: WOODEN_SHOVEL
       amount: 1
       buy-price: 15
-      sell-price: 6.0
+      sell-price: 9
     - item: STONE_SHOVEL
       amount: 1
       buy-price: 27
-      sell-price: 10.0
+      sell-price: 16.2
     - item: IRON_SHOVEL
       amount: 1
       buy-price: 63
-      sell-price: 25.0
+      sell-price: 37.8
     - item: GOLDEN_SHOVEL
       amount: 1
       buy-price: 81
-      sell-price: 32.0
+      sell-price: 48.6
     - item: DIAMOND_SHOVEL
       amount: 1
-      buy-price: 240
-      sell-price: 96.0
+      buy-price: 24.2
+      sell-price: 14.5
     - item: NETHERITE_SHOVEL
       amount: 1
-      buy-price: 11850
-      sell-price: 4740.0
+      buy-price: 18774.2
+      sell-price: 11264.5
     - item: WOODEN_HOE
       amount: 1
       buy-price: 15
-      sell-price: 6.0
+      sell-price: 9
     - item: STONE_HOE
       amount: 1
       buy-price: 24
-      sell-price: 9.0
+      sell-price: 14.4
     - item: IRON_HOE
       amount: 1
       buy-price: 54
-      sell-price: 21.0
+      sell-price: 32.4
     - item: GOLDEN_HOE
       amount: 1
       buy-price: 75
-      sell-price: 30.0
+      sell-price: 45
     - item: DIAMOND_HOE
       amount: 1
-      buy-price: 240
-      sell-price: 96.0
+      buy-price: 46.7
+      sell-price: 28.0
     - item: NETHERITE_HOE
       amount: 1
-      buy-price: 11850
-      sell-price: 4740.0
+      buy-price: 18796.7
+      sell-price: 11278.0
     - item: SHEARS
       amount: 1
       buy-price: 90
-      sell-price: 36.0
+      sell-price: 54
     - item: FISHING_ROD
       amount: 1
       buy-price: 66
-      sell-price: 26.0
+      sell-price: 39.6
     - item: FLINT_AND_STEEL
       amount: 1
       buy-price: 36
-      sell-price: 14.0
+      sell-price: 21.6
     - item: COMPASS
       amount: 1
       buy-price: 90
-      sell-price: 36.0
+      sell-price: 54
     - item: CLOCK
       amount: 1
       buy-price: 90
-      sell-price: 36.0
+      sell-price: 54
     - item: SPYGLASS
       amount: 1
       buy-price: 180
-      sell-price: 72.0
+      sell-price: 108
     - item: BRUSH
       amount: 1
       buy-price: 54
-      sell-price: 21.0
+      sell-price: 32.4
     - item: LEAD
       amount: 4
       buy-price: 72
-      sell-price: 29.0
+      sell-price: 43.2
     - item: NAME_TAG
       amount: 4
       buy-price: 240
@@ -1691,7 +1691,7 @@ templates:
         - item: NETHERITE_INGOT
           amount: 1
           buy-price: 11250
-          sell-price: 4500.0
+          sell-price: 6750
         - item: NETHERITE_BLOCK
           amount: 1
           buy-price: 97500
@@ -1703,7 +1703,7 @@ templates:
         - item: NETHERITE_UPGRADE_SMITHING_TEMPLATE
           amount: 1
           buy-price: 7500
-          sell-price: 3000.0
+          sell-price: 4500
         - item: COAST_ARMOR_TRIM_SMITHING_TEMPLATE
           amount: 1
           buy-price: 600
@@ -1966,35 +1966,35 @@ templates:
     - item: WOODEN_SWORD
       amount: 1
       buy-price: 18
-      sell-price: 7.0
+      sell-price: 10.8
     - item: STONE_SWORD
       amount: 1
       buy-price: 30
-      sell-price: 12.0
+      sell-price: 18
     - item: IRON_SWORD
       amount: 1
       buy-price: 67.5
-      sell-price: 27.0
+      sell-price: 40.5
     - item: GOLDEN_SWORD
       amount: 1
-      buy-price: 90.0
-      sell-price: 36.0
+      buy-price: 90
+      sell-price: 54
     - item: DIAMOND_SWORD
       amount: 1
-      buy-price: 337.5
-      sell-price: 135.0
+      buy-price: 45.8
+      sell-price: 27.5
     - item: NETHERITE_SWORD
       amount: 1
-      buy-price: 12150
-      sell-price: 4860.0
+      buy-price: 18795.8
+      sell-price: 11277.5
     - item: BOW
       amount: 1
       buy-price: 120
-      sell-price: 48.0
+      sell-price: 72
     - item: CROSSBOW
       amount: 1
       buy-price: 180
-      sell-price: 72.0
+      sell-price: 108
     - item: TRIDENT
       amount: 1
       buy-price: 1800
@@ -2002,34 +2002,34 @@ templates:
     - item: ARROW
       amount: 64
       buy-price: 72
-      sell-price: 29.0
+      sell-price: 43.2
     - item: SPECTRAL_ARROW
       amount: 64
       buy-price: 144
-      sell-price: 58.0
+      sell-price: 86.4
     - item: SHIELD
       amount: 1
       buy-price: 126
-      sell-price: 50.0
+      sell-price: 75.6
   armor:
     display-name: '&9Armures'
     items:
     - item: LEATHER_HELMET
       amount: 1
-      buy-price: 81.0
-      sell-price: 32.0
+      buy-price: 81
+      sell-price: 48.6
     - item: LEATHER_CHESTPLATE
       amount: 1
       buy-price: 140.5
-      sell-price: 56.0
+      sell-price: 84.3
     - item: LEATHER_LEGGINGS
       amount: 1
-      buy-price: 111.0
-      sell-price: 44.5
+      buy-price: 111
+      sell-price: 66.6
     - item: LEATHER_BOOTS
       amount: 1
       buy-price: 78.5
-      sell-price: 31.5
+      sell-price: 47.1
     - item: CHAINMAIL_HELMET
       amount: 1
       buy-price: 189.0
@@ -2048,68 +2048,68 @@ templates:
       sell-price: 73.5
     - item: IRON_HELMET
       amount: 1
-      buy-price: 162.0
-      sell-price: 64.5
+      buy-price: 162
+      sell-price: 97.2
     - item: IRON_CHESTPLATE
       amount: 1
-      buy-price: 281.0
-      sell-price: 112.5
+      buy-price: 281
+      sell-price: 168.6
     - item: IRON_LEGGINGS
       amount: 1
       buy-price: 222.5
-      sell-price: 89.0
+      sell-price: 133.5
     - item: IRON_BOOTS
       amount: 1
       buy-price: 157.5
-      sell-price: 63.0
+      sell-price: 94.5
     - item: GOLDEN_HELMET
       amount: 1
-      buy-price: 216.0
-      sell-price: 86.0
+      buy-price: 216
+      sell-price: 129.6
     - item: GOLDEN_CHESTPLATE
       amount: 1
       buy-price: 337.5
-      sell-price: 135.0
+      sell-price: 202.5
     - item: GOLDEN_LEGGINGS
       amount: 1
       buy-price: 278.5
-      sell-price: 111.0
+      sell-price: 167.1
     - item: GOLDEN_BOOTS
       amount: 1
-      buy-price: 210.0
-      sell-price: 84.0
+      buy-price: 210
+      sell-price: 126
     - item: DIAMOND_HELMET
       amount: 1
-      buy-price: 945.0
-      sell-price: 378.0
+      buy-price: 112.5
+      sell-price: 67.5
     - item: DIAMOND_CHESTPLATE
       amount: 1
-      buy-price: 1546.5
-      sell-price: 618.5
+      buy-price: 180
+      sell-price: 108
     - item: DIAMOND_LEGGINGS
       amount: 1
-      buy-price: 1323.0
-      sell-price: 529.0
+      buy-price: 157.5
+      sell-price: 94.5
     - item: DIAMOND_BOOTS
       amount: 1
-      buy-price: 735.0
-      sell-price: 294.0
+      buy-price: 90
+      sell-price: 54
     - item: NETHERITE_HELMET
       amount: 1
-      buy-price: 11205.0
-      sell-price: 4482.0
+      buy-price: 18862.5
+      sell-price: 11317.5
     - item: NETHERITE_CHESTPLATE
       amount: 1
-      buy-price: 12093.5
-      sell-price: 4837.5
+      buy-price: 18930
+      sell-price: 11358
     - item: NETHERITE_LEGGINGS
       amount: 1
-      buy-price: 11769.5
-      sell-price: 4707.5
+      buy-price: 18907.5
+      sell-price: 11344.5
     - item: NETHERITE_BOOTS
       amount: 1
-      buy-price: 10578.5
-      sell-price: 4231.5
+      buy-price: 18840
+      sell-price: 11304
     - item: TURTLE_HELMET
       amount: 1
       buy-price: 540.0
@@ -2119,37 +2119,438 @@ templates:
       buy-price: 9600
       sell-price: 3840.0
   potions:
-    display-name: '&5Boutique de potions'
-    items:
-    - item: POTION
-      amount: 1
-      buy-price: 500.0
-      sell-price: 200.0
-    - item: SPLASH_POTION
-      amount: 1
-      buy-price: 550.0
-      sell-price: 220.0
-    - item: LINGERING_POTION
-      amount: 1
-      buy-price: 650.0
-      sell-price: 260.0
-    - item: TIPPED_ARROW
-      amount: 16
-      buy-price: 520.0
-      sell-price: 208.0
-    - item: LEATHER_HORSE_ARMOR
-      amount: 1
-      buy-price: 300
-      sell-price: 120.0
-    - item: IRON_HORSE_ARMOR
-      amount: 1
-      buy-price: 900
-      sell-price: 360.0
-    - item: GOLDEN_HORSE_ARMOR
-      amount: 1
-      buy-price: 1050
-      sell-price: 420.0
-    - item: DIAMOND_HORSE_ARMOR
-      amount: 1
-      buy-price: 2100
-      sell-price: 840.0
+    display-name: '&5Boutique Potions'
+    items: []
+    categories:
+      base:
+        display-name: '&7Bases'
+        icon: POTION
+        items:
+        - item: POTION_WATER
+          amount: 1
+          buy-price: 1.3
+          sell-price: 0.8
+        - item: POTION_AWKWARD
+          amount: 1
+          buy-price: 26.3
+          sell-price: 15.8
+      standard:
+        display-name: '&aPotions'
+        icon: POTION
+        items:
+        - item: POTION_SWIFTNESS
+          amount: 1
+          buy-price: 31.3
+          sell-price: 18.8
+        - item: POTION_SWIFTNESS_LONG
+          amount: 1
+          buy-price: 37.9
+          sell-price: 22.7
+        - item: POTION_SWIFTNESS_STRONG
+          amount: 1
+          buy-price: 33.4
+          sell-price: 20.0
+        - item: POTION_STRENGTH
+          amount: 1
+          buy-price: 76.3
+          sell-price: 45.8
+        - item: POTION_STRENGTH_LONG
+          amount: 1
+          buy-price: 82.9
+          sell-price: 49.7
+        - item: POTION_STRENGTH_STRONG
+          amount: 1
+          buy-price: 78.4
+          sell-price: 47.0
+        - item: POTION_HEALING
+          amount: 1
+          buy-price: 62.2
+          sell-price: 37.4
+        - item: POTION_HEALING_STRONG
+          amount: 1
+          buy-price: 64.3
+          sell-price: 38.6
+        - item: POTION_REGENERATION
+          amount: 1
+          buy-price: 426.3
+          sell-price: 255.8
+        - item: POTION_REGENERATION_LONG
+          amount: 1
+          buy-price: 432.9
+          sell-price: 259.7
+        - item: POTION_REGENERATION_STRONG
+          amount: 1
+          buy-price: 428.4
+          sell-price: 257.0
+        - item: POTION_FIRE_RESISTANCE
+          amount: 1
+          buy-price: 56.3
+          sell-price: 33.8
+        - item: POTION_FIRE_RESISTANCE_LONG
+          amount: 1
+          buy-price: 62.9
+          sell-price: 37.7
+        - item: POTION_NIGHT_VISION
+          amount: 1
+          buy-price: 31.6
+          sell-price: 18.9
+        - item: POTION_NIGHT_VISION_LONG
+          amount: 1
+          buy-price: 38.1
+          sell-price: 22.9
+        - item: POTION_WATER_BREATHING
+          amount: 1
+          buy-price: 76.3
+          sell-price: 45.8
+        - item: POTION_WATER_BREATHING_LONG
+          amount: 1
+          buy-price: 82.9
+          sell-price: 49.7
+        - item: POTION_LEAPING
+          amount: 1
+          buy-price: 106.3
+          sell-price: 63.8
+        - item: POTION_LEAPING_LONG
+          amount: 1
+          buy-price: 112.9
+          sell-price: 67.7
+        - item: POTION_LEAPING_STRONG
+          amount: 1
+          buy-price: 108.4
+          sell-price: 65.0
+        - item: POTION_SLOW_FALLING
+          amount: 1
+          buy-price: 106.3
+          sell-price: 63.8
+        - item: POTION_SLOW_FALLING_LONG
+          amount: 1
+          buy-price: 112.9
+          sell-price: 67.7
+        - item: POTION_INVISIBILITY
+          amount: 1
+          buy-price: 54.3
+          sell-price: 32.6
+        - item: POTION_INVISIBILITY_LONG
+          amount: 1
+          buy-price: 60.9
+          sell-price: 36.5
+        - item: POTION_POISON
+          amount: 1
+          buy-price: 41.3
+          sell-price: 24.8
+        - item: POTION_POISON_LONG
+          amount: 1
+          buy-price: 47.9
+          sell-price: 28.7
+        - item: POTION_POISON_STRONG
+          amount: 1
+          buy-price: 43.4
+          sell-price: 26.0
+        - item: POTION_SLOWNESS
+          amount: 1
+          buy-price: 54.3
+          sell-price: 32.6
+        - item: POTION_SLOWNESS_LONG
+          amount: 1
+          buy-price: 60.9
+          sell-price: 36.5
+        - item: POTION_HARMING
+          amount: 1
+          buy-price: 54.3
+          sell-price: 32.6
+        - item: POTION_HARMING_STRONG
+          amount: 1
+          buy-price: 56.4
+          sell-price: 33.8
+        - item: POTION_TURTLE_MASTER
+          amount: 1
+          buy-price: 566.3
+          sell-price: 339.8
+        - item: POTION_TURTLE_MASTER_LONG
+          amount: 1
+          buy-price: 572.9
+          sell-price: 343.7
+        - item: POTION_TURTLE_MASTER_STRONG
+          amount: 1
+          buy-price: 568.4
+          sell-price: 341.0
+      splash:
+        display-name: '&ePotions explosives'
+        icon: SPLASH_POTION
+        items:
+        - item: SPLASH_POTION_SWIFTNESS
+          amount: 1
+          buy-price: 46.3
+          sell-price: 27.8
+        - item: SPLASH_POTION_SWIFTNESS_LONG
+          amount: 1
+          buy-price: 52.9
+          sell-price: 31.7
+        - item: SPLASH_POTION_SWIFTNESS_STRONG
+          amount: 1
+          buy-price: 48.4
+          sell-price: 29.0
+        - item: SPLASH_POTION_STRENGTH
+          amount: 1
+          buy-price: 91.3
+          sell-price: 54.8
+        - item: SPLASH_POTION_STRENGTH_LONG
+          amount: 1
+          buy-price: 97.9
+          sell-price: 58.7
+        - item: SPLASH_POTION_STRENGTH_STRONG
+          amount: 1
+          buy-price: 93.4
+          sell-price: 56.0
+        - item: SPLASH_POTION_HEALING
+          amount: 1
+          buy-price: 77.2
+          sell-price: 46.4
+        - item: SPLASH_POTION_HEALING_STRONG
+          amount: 1
+          buy-price: 79.3
+          sell-price: 47.6
+        - item: SPLASH_POTION_REGENERATION
+          amount: 1
+          buy-price: 441.3
+          sell-price: 264.8
+        - item: SPLASH_POTION_REGENERATION_LONG
+          amount: 1
+          buy-price: 447.9
+          sell-price: 268.7
+        - item: SPLASH_POTION_REGENERATION_STRONG
+          amount: 1
+          buy-price: 443.4
+          sell-price: 266.0
+        - item: SPLASH_POTION_FIRE_RESISTANCE
+          amount: 1
+          buy-price: 71.3
+          sell-price: 42.8
+        - item: SPLASH_POTION_FIRE_RESISTANCE_LONG
+          amount: 1
+          buy-price: 77.9
+          sell-price: 46.7
+        - item: SPLASH_POTION_NIGHT_VISION
+          amount: 1
+          buy-price: 46.6
+          sell-price: 27.9
+        - item: SPLASH_POTION_NIGHT_VISION_LONG
+          amount: 1
+          buy-price: 53.1
+          sell-price: 31.9
+        - item: SPLASH_POTION_WATER_BREATHING
+          amount: 1
+          buy-price: 91.3
+          sell-price: 54.8
+        - item: SPLASH_POTION_WATER_BREATHING_LONG
+          amount: 1
+          buy-price: 97.9
+          sell-price: 58.7
+        - item: SPLASH_POTION_LEAPING
+          amount: 1
+          buy-price: 121.3
+          sell-price: 72.8
+        - item: SPLASH_POTION_LEAPING_LONG
+          amount: 1
+          buy-price: 127.9
+          sell-price: 76.7
+        - item: SPLASH_POTION_LEAPING_STRONG
+          amount: 1
+          buy-price: 123.4
+          sell-price: 74.0
+        - item: SPLASH_POTION_SLOW_FALLING
+          amount: 1
+          buy-price: 121.3
+          sell-price: 72.8
+        - item: SPLASH_POTION_SLOW_FALLING_LONG
+          amount: 1
+          buy-price: 127.9
+          sell-price: 76.7
+        - item: SPLASH_POTION_INVISIBILITY
+          amount: 1
+          buy-price: 69.3
+          sell-price: 41.6
+        - item: SPLASH_POTION_INVISIBILITY_LONG
+          amount: 1
+          buy-price: 75.9
+          sell-price: 45.5
+        - item: SPLASH_POTION_POISON
+          amount: 1
+          buy-price: 56.3
+          sell-price: 33.8
+        - item: SPLASH_POTION_POISON_LONG
+          amount: 1
+          buy-price: 62.9
+          sell-price: 37.7
+        - item: SPLASH_POTION_POISON_STRONG
+          amount: 1
+          buy-price: 58.4
+          sell-price: 35.0
+        - item: SPLASH_POTION_SLOWNESS
+          amount: 1
+          buy-price: 69.3
+          sell-price: 41.6
+        - item: SPLASH_POTION_SLOWNESS_LONG
+          amount: 1
+          buy-price: 75.9
+          sell-price: 45.5
+        - item: SPLASH_POTION_HARMING
+          amount: 1
+          buy-price: 69.3
+          sell-price: 41.6
+        - item: SPLASH_POTION_HARMING_STRONG
+          amount: 1
+          buy-price: 71.4
+          sell-price: 42.8
+        - item: SPLASH_POTION_TURTLE_MASTER
+          amount: 1
+          buy-price: 581.3
+          sell-price: 348.8
+        - item: SPLASH_POTION_TURTLE_MASTER_LONG
+          amount: 1
+          buy-price: 587.9
+          sell-price: 352.7
+        - item: SPLASH_POTION_TURTLE_MASTER_STRONG
+          amount: 1
+          buy-price: 583.4
+          sell-price: 350.0
+      lingering:
+        display-name: '&dPotions persistantes'
+        icon: LINGERING_POTION
+        items:
+        - item: LINGERING_POTION_SWIFTNESS
+          amount: 1
+          buy-price: 546.3
+          sell-price: 327.8
+        - item: LINGERING_POTION_SWIFTNESS_LONG
+          amount: 1
+          buy-price: 552.9
+          sell-price: 331.7
+        - item: LINGERING_POTION_SWIFTNESS_STRONG
+          amount: 1
+          buy-price: 548.4
+          sell-price: 329.0
+        - item: LINGERING_POTION_STRENGTH
+          amount: 1
+          buy-price: 591.3
+          sell-price: 354.8
+        - item: LINGERING_POTION_STRENGTH_LONG
+          amount: 1
+          buy-price: 597.9
+          sell-price: 358.7
+        - item: LINGERING_POTION_STRENGTH_STRONG
+          amount: 1
+          buy-price: 593.4
+          sell-price: 356.0
+        - item: LINGERING_POTION_HEALING
+          amount: 1
+          buy-price: 577.2
+          sell-price: 346.3
+        - item: LINGERING_POTION_HEALING_STRONG
+          amount: 1
+          buy-price: 579.3
+          sell-price: 347.6
+        - item: LINGERING_POTION_REGENERATION
+          amount: 1
+          buy-price: 941.3
+          sell-price: 564.8
+        - item: LINGERING_POTION_REGENERATION_LONG
+          amount: 1
+          buy-price: 947.9
+          sell-price: 568.7
+        - item: LINGERING_POTION_REGENERATION_STRONG
+          amount: 1
+          buy-price: 943.4
+          sell-price: 566.0
+        - item: LINGERING_POTION_FIRE_RESISTANCE
+          amount: 1
+          buy-price: 571.3
+          sell-price: 342.8
+        - item: LINGERING_POTION_FIRE_RESISTANCE_LONG
+          amount: 1
+          buy-price: 577.9
+          sell-price: 346.7
+        - item: LINGERING_POTION_NIGHT_VISION
+          amount: 1
+          buy-price: 546.6
+          sell-price: 327.9
+        - item: LINGERING_POTION_NIGHT_VISION_LONG
+          amount: 1
+          buy-price: 553.1
+          sell-price: 331.9
+        - item: LINGERING_POTION_WATER_BREATHING
+          amount: 1
+          buy-price: 591.3
+          sell-price: 354.8
+        - item: LINGERING_POTION_WATER_BREATHING_LONG
+          amount: 1
+          buy-price: 597.9
+          sell-price: 358.7
+        - item: LINGERING_POTION_LEAPING
+          amount: 1
+          buy-price: 621.3
+          sell-price: 372.8
+        - item: LINGERING_POTION_LEAPING_LONG
+          amount: 1
+          buy-price: 627.9
+          sell-price: 376.7
+        - item: LINGERING_POTION_LEAPING_STRONG
+          amount: 1
+          buy-price: 623.4
+          sell-price: 374.0
+        - item: LINGERING_POTION_SLOW_FALLING
+          amount: 1
+          buy-price: 621.3
+          sell-price: 372.8
+        - item: LINGERING_POTION_SLOW_FALLING_LONG
+          amount: 1
+          buy-price: 627.9
+          sell-price: 376.7
+        - item: LINGERING_POTION_INVISIBILITY
+          amount: 1
+          buy-price: 569.3
+          sell-price: 341.6
+        - item: LINGERING_POTION_INVISIBILITY_LONG
+          amount: 1
+          buy-price: 575.9
+          sell-price: 345.5
+        - item: LINGERING_POTION_POISON
+          amount: 1
+          buy-price: 556.3
+          sell-price: 333.8
+        - item: LINGERING_POTION_POISON_LONG
+          amount: 1
+          buy-price: 562.9
+          sell-price: 337.7
+        - item: LINGERING_POTION_POISON_STRONG
+          amount: 1
+          buy-price: 558.4
+          sell-price: 335.0
+        - item: LINGERING_POTION_SLOWNESS
+          amount: 1
+          buy-price: 569.3
+          sell-price: 341.6
+        - item: LINGERING_POTION_SLOWNESS_LONG
+          amount: 1
+          buy-price: 575.9
+          sell-price: 345.5
+        - item: LINGERING_POTION_HARMING
+          amount: 1
+          buy-price: 569.3
+          sell-price: 341.6
+        - item: LINGERING_POTION_HARMING_STRONG
+          amount: 1
+          buy-price: 571.4
+          sell-price: 342.8
+        - item: LINGERING_POTION_TURTLE_MASTER
+          amount: 1
+          buy-price: 1081.3
+          sell-price: 648.8
+        - item: LINGERING_POTION_TURTLE_MASTER_LONG
+          amount: 1
+          buy-price: 1087.9
+          sell-price: 652.7
+        - item: LINGERING_POTION_TURTLE_MASTER_STRONG
+          amount: 1
+          buy-price: 1083.4
+          sell-price: 650.0
