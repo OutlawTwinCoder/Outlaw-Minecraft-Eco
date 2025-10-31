@@ -21,6 +21,9 @@ permissions:
   outlaweco.use:
     description: Allows opening shop templates
     default: false
+  outlaweco.command.shopopen:
+    description: Allows executing /shop open from chat
+    default: false
   outlawecoadmin:
     description: Allows managing shops and templates
     default: op

@@ -27,6 +27,11 @@ Plugin Paper/Spigot pour offrir un système d'économie centralisé avec boutiqu
 ### Joueurs avec la permission `outlaweco.use`
 | Commande | Description |
 | --- | --- |
+| Interactions PNJ | Les joueurs peuvent utiliser les PNJ de boutique pour ouvrir les menus d'achat/vente. |
+
+### Joueurs autorisés à exécuter `/shop open` (`outlaweco.command.shopopen`)
+| Commande | Description |
+| --- | --- |
 | `/shop open <template>` | Ouvre une boutique PNJ à partir d'un template configuré. |
 | `/shop open general` | Ouvre le magasin général commun (alias : `/shop open shop general`). |
 
@@ -86,6 +91,13 @@ L'interface `EconomyService` expose les méthodes suivantes :
 - `boolean has(UUID joueur, double montant)`
 
 Assurez-vous que votre plugin déclare une dépendance vers OutlawEconomy (via `plugin.yml` ou `softdepend`) pour être chargé après celui-ci.
+
+## Utilisation avec des PNJ (FancyNPC)
+
+- Attribuez la permission `outlaweco.use` aux joueurs pour qu'ils puissent interagir avec les PNJ de boutique.
+- Ne donnez pas la permission `outlaweco.command.shopopen` si vous souhaitez empêcher l'utilisation manuelle de `/shop open` dans le chat.
+- Configurez votre PNJ FancyNPC pour exécuter la commande en console : `/shop open <joueur> <template|general>` (par exemple `shop open %player% color`).
+- Le plugin vérifie toujours que le joueur ciblé possède `outlaweco.use`, ce qui garantit que seul le public autorisé peut ouvrir les menus.
 
 ## Création de boutiques NPC
 - Les boutiques sont basées sur des villageois invulnérables.
