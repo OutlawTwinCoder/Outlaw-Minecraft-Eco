@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private static final String PERMISSION_USE = "outlaweco.use";
+    private static final String PERMISSION_OPEN_COMMAND = "outlaweco.command.shopopen";
     private static final String PERMISSION_ADMIN = "outlawecoadmin";
     private static final int GENERAL_PAGE_SIZE = 30;
     private static final int PRICE_PAGE_SIZE = 45;
@@ -307,8 +308,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Commandes réservées aux joueurs.");
-            return true;
+            return handleNonPlayerCommand(sender, args);
         }
 
         if (args.length == 0) {
@@ -344,12 +344,16 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private void sendHelp(Player player) {
         player.sendMessage("§6Boutique OutlawEco");
         boolean isAdmin = player.hasPermission(PERMISSION_ADMIN);
-        boolean canUse = isAdmin || player.hasPermission(PERMISSION_USE);
+        boolean canInteract = isAdmin || player.hasPermission(PERMISSION_USE);
+        boolean canUseCommand = isAdmin || player.hasPermission(PERMISSION_OPEN_COMMAND);
 
-        if (canUse) {
+        if (canUseCommand) {
             player.sendMessage("§e--- Utilisateur ---");
             player.sendMessage("§e/shop open <template>§7 - ouvrir une boutique PNJ");
             player.sendMessage("§e/shop open general§7 - ouvrir le magasin général (alias: /shop open shop general)");
+        } else if (canInteract) {
+            player.sendMessage("§e--- Utilisateur ---");
+            player.sendMessage("§7Interagissez avec un PNJ de boutique pour ouvrir l'interface.");
         }
 
         if (isAdmin) {
@@ -369,27 +373,80 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§cVous n'avez pas la permission.");
             return true;
         }
+        if (!player.hasPermission(PERMISSION_OPEN_COMMAND) && !player.hasPermission(PERMISSION_ADMIN)) {
+            player.sendMessage("§cCette commande est réservée aux PNJ.");
+            return true;
+        }
         if (args.length < 2) {
             player.sendMessage("§cMerci de préciser un template ou 'general'.");
             return true;
         }
-        String target = args[1].toLowerCase(Locale.ROOT);
-        if (target.equals("shop") && args.length >= 3) {
-            target = args[2].toLowerCase(Locale.ROOT);
-        } else if (target.equals("shop")) {
-            player.sendMessage("§cUsage: /shop open shop general");
+        openForTarget(player, player, args, 1);
+        return true;
+    }
+
+    private boolean handleNonPlayerCommand(CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            sender.sendMessage("Usage console: /shop open <joueur> <template|general>");
             return true;
         }
-        if (target.equals("general")) {
-            openGeneralStore(player, 0);
+
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        if (!sub.equals("open")) {
+            sender.sendMessage("Commande réservée aux joueurs.");
             return true;
         }
-        ShopTemplate template = templates.get(target);
+
+        if (args.length < 3) {
+            sender.sendMessage("Usage: /shop open <joueur> <template|general>");
+            return true;
+        }
+
+        String playerName = args[1];
+        Player target = Bukkit.getPlayerExact(playerName);
+        if (target == null) {
+            sender.sendMessage("§cJoueur introuvable: " + playerName);
+            return true;
+        }
+
+        if (!target.hasPermission(PERMISSION_USE) && !target.hasPermission(PERMISSION_ADMIN)) {
+            sender.sendMessage("§cLe joueur " + target.getName() + " n'a pas la permission d'utiliser les boutiques.");
+            return true;
+        }
+
+        boolean success = openForTarget(sender, target, args, 2);
+        if (success) {
+            sender.sendMessage("§aBoutique ouverte pour " + target.getName() + ".");
+        }
+        return true;
+    }
+
+    private boolean openForTarget(CommandSender feedbackReceiver, Player targetPlayer, String[] args, int index) {
+        if (index >= args.length) {
+            feedbackReceiver.sendMessage("§cMerci de préciser un template ou 'general'.");
+            return false;
+        }
+
+        String targetKey = args[index].toLowerCase(Locale.ROOT);
+        if (targetKey.equals("shop")) {
+            if (index + 1 >= args.length) {
+                feedbackReceiver.sendMessage("§cUsage: /shop open <joueur?> shop <template|general>");
+                return false;
+            }
+            targetKey = args[index + 1].toLowerCase(Locale.ROOT);
+        }
+
+        if (targetKey.equals("general")) {
+            openGeneralStore(targetPlayer, 0);
+            return true;
+        }
+
+        ShopTemplate template = templates.get(targetKey);
         if (template == null) {
-            player.sendMessage("§cTemplate introuvable.");
-            return true;
+            feedbackReceiver.sendMessage("§cTemplate introuvable.");
+            return false;
         }
-        openTemplate(player, template);
+        openTemplate(targetPlayer, template);
         return true;
     }
 
@@ -1291,11 +1348,12 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return List.of();
         }
         boolean isAdmin = player.hasPermission(PERMISSION_ADMIN);
-        boolean canUse = isAdmin || player.hasPermission(PERMISSION_USE);
+        boolean canInteract = isAdmin || player.hasPermission(PERMISSION_USE);
+        boolean canUseCommand = isAdmin || player.hasPermission(PERMISSION_OPEN_COMMAND);
 
         if (args.length == 1) {
             List<String> subcommands = new ArrayList<>();
-            if (canUse) {
+            if (canUseCommand) {
                 subcommands.add("open");
             }
             if (isAdmin) {
@@ -1307,7 +1365,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
 
         if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("open") && canUse) {
+            if (args[0].equalsIgnoreCase("open") && canUseCommand && canInteract) {
                 List<String> options = new ArrayList<>(templates.keySet());
                 options.add("general");
                 options.add("shop");
@@ -1336,7 +1394,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             if (isAdmin && args[0].equalsIgnoreCase("add") && args[1].equalsIgnoreCase("itemshop")) {
                 return filterByPrefix(templates.keySet(), args[2]);
             }
-            if (args[0].equalsIgnoreCase("open") && canUse && args[1].equalsIgnoreCase("shop")) {
+            if (args[0].equalsIgnoreCase("open") && canUseCommand && canInteract && args[1].equalsIgnoreCase("shop")) {
                 return filterByPrefix(List.of("general"), args[2]);
             }
         }
