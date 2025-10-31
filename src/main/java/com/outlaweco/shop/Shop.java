@@ -46,7 +46,7 @@ public class Shop {
         spawned.setInvulnerable(true);
         String display = template != null ? template.getDisplayName() : "§eBoutique";
         spawned.setCustomName(display);
-        spawned.setCustomNameVisible(true);
+        spawned.setCustomNameVisible(false);
         spawned.setVillagerType(Villager.Type.PLAINS);
         this.villager = spawned;
         return spawned;

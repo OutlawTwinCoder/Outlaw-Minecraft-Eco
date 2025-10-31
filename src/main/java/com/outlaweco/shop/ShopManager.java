@@ -29,6 +29,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +45,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private static final int PRICE_PAGE_SIZE = 45;
     private static final String GENERAL_TEMPLATE_KEY = "general";
     private static final String GENERAL_DISPLAY_NAME = "§2Magasin général";
+    private static final double SHOP_NAME_VIEW_DISTANCE_SQUARED = 25 * 25;
 
     private final OutlawEconomyPlugin plugin;
     private final EconomyManager economyManager;
@@ -60,6 +62,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private final Map<UUID, PendingPriceInput> pendingPriceInputs = new HashMap<>();
     private final Map<UUID, PendingListingInput> pendingListingInputs = new HashMap<>();
     private final List<Material> selectableMaterials;
+    private BukkitTask nameVisibilityTask;
 
     public ShopManager(OutlawEconomyPlugin plugin) {
         this.plugin = plugin;
@@ -106,6 +109,15 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         loadTemplates();
         loadShops();
         loadGeneralStore();
+        startNameVisibilityTask();
+        updateShopNameVisibility();
+    }
+
+    private void startNameVisibilityTask() {
+        if (nameVisibilityTask != null) {
+            nameVisibilityTask.cancel();
+        }
+        nameVisibilityTask = Bukkit.getScheduler().runTaskTimer(plugin, this::updateShopNameVisibility, 20L, 20L);
     }
 
     private void loadTemplates() {
@@ -271,11 +283,11 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
         if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
             villager.setCustomName(GENERAL_DISPLAY_NAME);
-            villager.setCustomNameVisible(true);
         }
         villager.setVillagerLevel(5);
         PersistentDataContainer data = villager.getPersistentDataContainer();
         data.set(shopKey, PersistentDataType.STRING, shop.getId().toString());
+        updateShopNameVisibility();
     }
 
     private void saveShop(Shop shop) {
@@ -303,6 +315,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         } catch (IOException e) {
             plugin.getLogger().severe("Impossible d'enregistrer shops.yml: " + e.getMessage());
         }
+        updateShopNameVisibility();
     }
 
     @Override
@@ -615,7 +628,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             }
             if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
                 villager.setCustomName(GENERAL_DISPLAY_NAME);
-                villager.setCustomNameVisible(true);
+                villager.setCustomNameVisible(false);
                 continue;
             }
             ShopTemplate template = templates.get(shop.getTemplateKey());
@@ -623,8 +636,9 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 continue;
             }
             villager.setCustomName(template.getDisplayName());
-            villager.setCustomNameVisible(true);
+            villager.setCustomNameVisible(false);
         }
+        updateShopNameVisibility();
     }
 
     private void saveGeneralStore() {
@@ -1412,6 +1426,41 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     public void shutdown() {
         saveGeneralStore();
+        if (nameVisibilityTask != null) {
+            nameVisibilityTask.cancel();
+            nameVisibilityTask = null;
+        }
+    }
+
+    private void updateShopNameVisibility() {
+        if (shops.isEmpty()) {
+            return;
+        }
+        Collection<? extends Player> players = Bukkit.getOnlinePlayers();
+        boolean hasPlayers = !players.isEmpty();
+        for (Shop shop : shops.values()) {
+            Villager villager = shop.getVillager();
+            if (villager == null || villager.isDead()) {
+                continue;
+            }
+            boolean visible = false;
+            if (hasPlayers) {
+                Location villagerLocation = villager.getLocation();
+                for (Player player : players) {
+                    if (!player.isOnline()) {
+                        continue;
+                    }
+                    if (!Objects.equals(player.getWorld(), villagerLocation.getWorld())) {
+                        continue;
+                    }
+                    if (player.getLocation().distanceSquared(villagerLocation) <= SHOP_NAME_VIEW_DISTANCE_SQUARED) {
+                        visible = true;
+                        break;
+                    }
+                }
+            }
+            villager.setCustomNameVisible(visible);
+        }
     }
 
     private record PendingPriceInput(Material material, int page) {
