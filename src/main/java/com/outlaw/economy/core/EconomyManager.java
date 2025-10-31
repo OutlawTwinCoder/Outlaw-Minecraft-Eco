@@ -1,8 +1,10 @@
 package com.outlaw.economy.core;
 
 import com.outlaw.economy.api.EconomyService;
+import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -10,7 +12,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
-import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -105,7 +106,6 @@ public class EconomyManager implements EconomyService, Listener {
         return balances.getOrDefault(playerId, 0d);
     }
 
-    @Override
     public double getBalance(OfflinePlayer player) {
         return getBalance(player.getUniqueId());
     }
@@ -151,6 +151,14 @@ public class EconomyManager implements EconomyService, Listener {
 
     public boolean has(UUID playerId, double amount) {
         return getBalance(playerId) >= amount;
+    }
+
+    public boolean accountExists(UUID playerId) {
+        return balances.containsKey(playerId) || balanceConfig.contains(playerId.toString());
+    }
+
+    public Plugin getPlugin() {
+        return plugin;
     }
 
     public Map<UUID, Double> getAllBalances() {

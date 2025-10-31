@@ -4,6 +4,8 @@ main: com.outlaw.economy.OutlawEconomyPlugin
 api-version: 1.20
 authors:
   - OutlawMC
+softdepend:
+  - Vault
 commands:
   balance:
     description: Vérifie ton solde ou consulte celui des autres (admin)

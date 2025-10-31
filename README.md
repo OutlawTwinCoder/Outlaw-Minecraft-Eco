@@ -92,6 +92,28 @@ L'interface `EconomyService` expose les méthodes suivantes :
 
 Assurez-vous que votre plugin déclare une dépendance vers OutlawEconomy (via `plugin.yml` ou `softdepend`) pour être chargé après celui-ci.
 
+### 3. Compatibilité Vault
+
+OutlawEconomy enregistre automatiquement un pont `net.milkbowl.vault.economy.Economy`. Tant que Vault est installé, tous les plugins compatibles Vault verront OutlawEconomy comme fournisseur d'économie.
+
+Dans votre `pom.xml`, ajoutez la dépendance Vault (scope `provided`) et le dépôt JitPack :
+
+```xml
+<repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+</repository>
+
+<dependency>
+    <groupId>com.github.MilkBowl</groupId>
+    <artifactId>VaultAPI</artifactId>
+    <version>1.7.1</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+Déclarez également `softdepend: [Vault]` dans votre `plugin.yml` pour attendre le chargement de Vault.
+
 ## Utilisation avec des PNJ (FancyNPC)
 
 - Attribuez la permission `outlaweco.use` aux joueurs pour qu'ils puissent interagir avec les PNJ de boutique.
