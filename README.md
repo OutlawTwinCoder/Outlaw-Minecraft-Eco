@@ -61,24 +61,23 @@ Deux approches sont possibles pour interagir avec l'économie depuis un autre pl
 
 ### 1. Utiliser l'API statique
 ```java
-import com.outlaweco.api.EconomyAPI;
+import com.outlaw.economy.api.EconomyAPI;
 
 UUID joueur = ...;
-EconomyAPI.deposit(joueur, 250.0);          // ajoute 250 OutlawCoin
-boolean ok = EconomyAPI.withdraw(joueur, 50.0); // retire 50 (false si solde insuffisant)
+EconomyAPI.deposit(joueur, 250.0, "Récompense de quête");          // ajoute 250 OutlawCoin
+boolean ok = EconomyAPI.withdraw(joueur, 50.0, "Achat boutique"); // retire 50 (false si solde insuffisant)
 double balance = EconomyAPI.getBalance(joueur);
 ```
 
 ### 2. Via le ServicesManager de Bukkit
 ```java
-import com.outlaweco.api.EconomyService;
+import com.outlaw.economy.api.EconomyService;
 import org.bukkit.Bukkit;
 
 EconomyService economy = Bukkit.getServicesManager().load(EconomyService.class);
 if (economy != null) {
     UUID joueur = ...;
-    if (economy.has(joueur, 500.0)) {
-        economy.withdraw(joueur, 500.0);
+    if (economy.withdraw(joueur, 500.0, "Achat territoire")) {
         // ... effectuer l'achat d'un territoire, etc.
     }
 }
@@ -86,10 +85,10 @@ if (economy != null) {
 
 L'interface `EconomyService` expose les méthodes suivantes :
 - `double getBalance(UUID joueur)`
-- `void setBalance(UUID joueur, double montant)`
-- `void deposit(UUID joueur, double montant)`
-- `boolean withdraw(UUID joueur, double montant)`
-- `boolean has(UUID joueur, double montant)`
+- `boolean deposit(UUID joueur, double montant, String raison)`
+- `boolean withdraw(UUID joueur, double montant, String raison)`
+- `String format(double montant)`
+- `String currencyCode()`
 
 Assurez-vous que votre plugin déclare une dépendance vers OutlawEconomy (via `plugin.yml` ou `softdepend`) pour être chargé après celui-ci.
 
