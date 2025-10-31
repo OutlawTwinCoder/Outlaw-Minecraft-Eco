@@ -99,7 +99,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private final Map<UUID, PendingPriceInput> pendingPriceInputs = new HashMap<>();
     private final Map<UUID, PendingListingInput> pendingListingInputs = new HashMap<>();
     private final List<Material> selectableMaterials;
-    private final Map<String, Double> templateMultipliers = new HashMap<>();
+    private final Map<String, TemplatePriceMultiplier> templateMultipliers = new HashMap<>();
     private BukkitTask nameVisibilityTask;
 
     public ShopManager(OutlawEconomyPlugin plugin) {
@@ -235,16 +235,38 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return;
         }
         for (String key : section.getKeys(false)) {
+            String normalized = key.toLowerCase(Locale.ROOT);
+            if (!templates.containsKey(normalized)) {
+                plugin.getLogger().warning("Multiplicateur défini pour un template inconnu: " + key);
+            }
+            ConfigurationSection templateSection = section.getConfigurationSection(key);
+            if (templateSection != null) {
+                double buy = templateSection.getDouble("buy", 1.0);
+                double sell = templateSection.getDouble("sell", 1.0);
+                if (buy <= 0) {
+                    plugin.getLogger().warning("Multiplicateur d'achat invalide pour le template '" + key + "'. Valeur ignorée.");
+                    buy = 1.0;
+                }
+                if (sell <= 0) {
+                    plugin.getLogger().warning("Multiplicateur de vente invalide pour le template '" + key + "'. Valeur ignorée.");
+                    sell = 1.0;
+                }
+                TemplatePriceMultiplier multiplier = new TemplatePriceMultiplier(buy, sell);
+                if (!multiplier.isDefault()) {
+                    templateMultipliers.put(normalized, multiplier);
+                }
+                continue;
+            }
+
             double value = section.getDouble(key, 1.0);
             if (value <= 0) {
                 plugin.getLogger().warning("Multiplicateur invalide pour le template '" + key + "'.");
                 continue;
             }
-            String normalized = key.toLowerCase(Locale.ROOT);
-            if (!templates.containsKey(normalized)) {
-                plugin.getLogger().warning("Multiplicateur défini pour un template inconnu: " + key);
+            TemplatePriceMultiplier multiplier = new TemplatePriceMultiplier(value, value);
+            if (!multiplier.isDefault()) {
+                templateMultipliers.put(normalized, multiplier);
             }
-            templateMultipliers.put(normalized, value);
         }
     }
 
@@ -512,7 +534,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§e/shop removeitem <template> <item>§7 - retirer un objet");
             player.sendMessage("§e/shop reloadtemplates§7 - recharger les templates");
             player.sendMessage("§e/shop setting price§7 - définir les prix via le menu créatif");
-            player.sendMessage("§e/shop setting overallprice <template> <multiplicateur|reset>§7 - ajuster tous les prix d'une boutique");
+            player.sendMessage("§e/shop setting overallprice <template> [buy|sell] <multiplicateur|reset>§7 - ajuster les prix d'une boutique");
         }
     }
 
@@ -767,12 +789,12 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private void sendSettingUsage(Player player) {
         player.sendMessage("§cUsage: /shop setting price");
-        player.sendMessage("§cUsage: /shop setting overallprice <template> <multiplicateur|reset>");
+        player.sendMessage("§cUsage: /shop setting overallprice <template> [buy|sell] <multiplicateur|reset>");
     }
 
     private boolean handleOverallPriceSetting(Player player, String[] args) {
         if (args.length < 4) {
-            player.sendMessage("§cUsage: /shop setting overallprice <template> <multiplicateur|reset>");
+            player.sendMessage("§cUsage: /shop setting overallprice <template> [buy|sell] <multiplicateur|reset>");
             return true;
         }
         String templateKey = args[2].toLowerCase(Locale.ROOT);
@@ -785,16 +807,56 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         if (displayName == null || displayName.isBlank()) {
             displayName = templateKey;
         }
-        String valueArg = args[3];
+
+        boolean explicitType = false;
+        boolean adjustBuy = true;
+        boolean adjustSell = true;
+        int valueIndex = 3;
+        String optionArg = args[valueIndex].toLowerCase(Locale.ROOT);
+        if (optionArg.equals("buy") || optionArg.equals("sell") || optionArg.equals("both")) {
+            explicitType = true;
+            adjustBuy = !optionArg.equals("sell");
+            adjustSell = !optionArg.equals("buy");
+            valueIndex++;
+            if (args.length <= valueIndex) {
+                player.sendMessage("§cUsage: /shop setting overallprice <template> [buy|sell] <multiplicateur|reset>");
+                return true;
+            }
+        }
+
+        String valueArg = args[valueIndex];
         if (valueArg.equalsIgnoreCase("reset")) {
-            boolean removed = resetTemplatePriceMultiplier(templateKey);
-            if (removed) {
-                player.sendMessage("§aMultiplicateur réinitialisé pour §e" + displayName + "§a.");
+            boolean changed;
+            if (adjustBuy && adjustSell && !explicitType) {
+                changed = resetTemplatePriceMultiplier(templateKey);
+                if (changed) {
+                    player.sendMessage("§aMultiplicateur réinitialisé pour §e" + displayName + "§a.");
+                } else {
+                    player.sendMessage("§7Ce template utilise déjà les prix par défaut.");
+                }
             } else {
-                player.sendMessage("§7Ce template utilise déjà les prix par défaut.");
+                changed = resetTemplatePriceMultiplier(templateKey, adjustBuy, adjustSell);
+                if (changed) {
+                    if (adjustBuy && adjustSell) {
+                        player.sendMessage("§aMultiplicateurs d'achat et de vente réinitialisés pour §e" + displayName + "§a.");
+                    } else if (adjustBuy) {
+                        player.sendMessage("§aMultiplicateur d'achat réinitialisé pour §e" + displayName + "§a.");
+                    } else {
+                        player.sendMessage("§aMultiplicateur de vente réinitialisé pour §e" + displayName + "§a.");
+                    }
+                } else {
+                    if (adjustBuy && adjustSell) {
+                        player.sendMessage("§7Ce template utilise déjà les multiplicateurs par défaut.");
+                    } else if (adjustBuy) {
+                        player.sendMessage("§7Ce template utilise déjà le multiplicateur d'achat par défaut.");
+                    } else {
+                        player.sendMessage("§7Ce template utilise déjà le multiplicateur de vente par défaut.");
+                    }
+                }
             }
             return true;
         }
+
         double value;
         try {
             value = Double.parseDouble(valueArg.replace(',', '.'));
@@ -806,8 +868,21 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§cLe multiplicateur doit être supérieur à 0.");
             return true;
         }
-        setTemplatePriceMultiplier(templateKey, value);
-        player.sendMessage("§aMultiplicateur de prix pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+
+        if (adjustBuy && adjustSell) {
+            setTemplatePriceMultiplier(templateKey, value, value);
+            if (explicitType) {
+                player.sendMessage("§aMultiplicateurs d'achat et de vente pour §e" + displayName + "§a définis à §ex" + formatPrice(value) + "§a.");
+            } else {
+                player.sendMessage("§aMultiplicateur de prix pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+            }
+        } else if (adjustBuy) {
+            setBuyPriceMultiplier(templateKey, value);
+            player.sendMessage("§aMultiplicateur d'achat pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+        } else {
+            setSellPriceMultiplier(templateKey, value);
+            player.sendMessage("§aMultiplicateur de vente pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+        }
         player.sendMessage("§7Réouvrez la boutique pour voir les nouveaux prix.");
         return true;
     }
@@ -956,11 +1031,11 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         int size = calculateInventorySize(Math.max(1, offers.size() + extraSlots));
         int maxSlots = backButton ? size - 1 : size;
         List<ShopOffer> visibleOffers = new ArrayList<>();
-        double multiplier = getPriceMultiplier(template.getKey());
+        TemplatePriceMultiplier multiplier = getTemplatePriceMultiplier(template.getKey());
         for (int i = 0; i < offers.size() && i < maxSlots; i++) {
             ShopOffer offer = offers.get(i);
-            double buyPrice = applyMultiplier(offer.buyPrice(), multiplier);
-            double sellPrice = applyMultiplier(offer.sellPrice(), multiplier);
+            double buyPrice = applyMultiplier(offer.buyPrice(), multiplier.buy());
+            double sellPrice = applyMultiplier(offer.sellPrice(), multiplier.sell());
             visibleOffers.add(new ShopOffer(offer.item(), buyPrice, sellPrice));
         }
         ShopInventoryHolder holder = ShopInventoryHolder.forOffers(template.getKey(),
@@ -1614,7 +1689,17 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
         if (args.length == 4) {
             if (isAdmin && args[0].equalsIgnoreCase("setting") && args[1].equalsIgnoreCase("overallprice")) {
-                return filterByPrefix(List.of("reset", "1", "1.5", "2", "2.3", "2.5"), args[3]);
+                List<String> options = new ArrayList<>(List.of("buy", "sell", "both", "reset", "1", "1.5", "2", "2.3", "2.5"));
+                return filterByPrefix(options, args[3]);
+            }
+        }
+
+        if (args.length == 5) {
+            if (isAdmin && args[0].equalsIgnoreCase("setting") && args[1].equalsIgnoreCase("overallprice")) {
+                String type = args[3].toLowerCase(Locale.ROOT);
+                if (type.equals("buy") || type.equals("sell") || type.equals("both")) {
+                    return filterByPrefix(List.of("reset", "1", "1.5", "2", "2.3", "2.5"), args[4]);
+                }
             }
         }
 
@@ -1668,19 +1753,44 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
-    private double getPriceMultiplier(String templateKey) {
+    private TemplatePriceMultiplier getTemplatePriceMultiplier(String templateKey) {
         if (templateKey == null) {
-            return 1.0;
+            return TemplatePriceMultiplier.DEFAULT;
         }
-        return templateMultipliers.getOrDefault(templateKey.toLowerCase(Locale.ROOT), 1.0);
+        return templateMultipliers.getOrDefault(templateKey.toLowerCase(Locale.ROOT), TemplatePriceMultiplier.DEFAULT);
     }
 
-    private void setTemplatePriceMultiplier(String templateKey, double multiplier) {
+    private void setTemplatePriceMultiplier(String templateKey, double buyMultiplier, double sellMultiplier) {
         String normalized = templateKey.toLowerCase(Locale.ROOT);
-        if (Math.abs(multiplier - 1.0) < 1.0E-6) {
+        TemplatePriceMultiplier updated = new TemplatePriceMultiplier(buyMultiplier, sellMultiplier);
+        if (updated.isDefault()) {
             templateMultipliers.remove(normalized);
         } else {
-            templateMultipliers.put(normalized, multiplier);
+            templateMultipliers.put(normalized, updated);
+        }
+        savePriceMultipliers();
+    }
+
+    private void setBuyPriceMultiplier(String templateKey, double multiplier) {
+        String normalized = templateKey.toLowerCase(Locale.ROOT);
+        TemplatePriceMultiplier current = templateMultipliers.getOrDefault(normalized, TemplatePriceMultiplier.DEFAULT);
+        TemplatePriceMultiplier updated = current.withBuy(multiplier);
+        if (updated.isDefault()) {
+            templateMultipliers.remove(normalized);
+        } else {
+            templateMultipliers.put(normalized, updated);
+        }
+        savePriceMultipliers();
+    }
+
+    private void setSellPriceMultiplier(String templateKey, double multiplier) {
+        String normalized = templateKey.toLowerCase(Locale.ROOT);
+        TemplatePriceMultiplier current = templateMultipliers.getOrDefault(normalized, TemplatePriceMultiplier.DEFAULT);
+        TemplatePriceMultiplier updated = current.withSell(multiplier);
+        if (updated.isDefault()) {
+            templateMultipliers.remove(normalized);
+        } else {
+            templateMultipliers.put(normalized, updated);
         }
         savePriceMultipliers();
     }
@@ -1691,13 +1801,48 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         return removed;
     }
 
+    private boolean resetTemplatePriceMultiplier(String templateKey, boolean resetBuy, boolean resetSell) {
+        if (!resetBuy && !resetSell) {
+            return false;
+        }
+        String normalized = templateKey.toLowerCase(Locale.ROOT);
+        TemplatePriceMultiplier current = templateMultipliers.get(normalized);
+        if (current == null) {
+            return false;
+        }
+        double buy = current.buy();
+        double sell = current.sell();
+        boolean changed = false;
+        if (resetBuy && Math.abs(buy - 1.0) > TemplatePriceMultiplier.EPSILON) {
+            buy = 1.0;
+            changed = true;
+        }
+        if (resetSell && Math.abs(sell - 1.0) > TemplatePriceMultiplier.EPSILON) {
+            sell = 1.0;
+            changed = true;
+        }
+        if (!changed) {
+            return false;
+        }
+        TemplatePriceMultiplier updated = new TemplatePriceMultiplier(buy, sell);
+        if (updated.isDefault()) {
+            templateMultipliers.remove(normalized);
+        } else {
+            templateMultipliers.put(normalized, updated);
+        }
+        savePriceMultipliers();
+        return true;
+    }
+
     private void savePriceMultipliers() {
         if (shopSettingsConfig == null) {
             shopSettingsConfig = new YamlConfiguration();
         }
         shopSettingsConfig.set("price-multipliers", null);
-        for (Map.Entry<String, Double> entry : templateMultipliers.entrySet()) {
-            shopSettingsConfig.set("price-multipliers." + entry.getKey(), entry.getValue());
+        for (Map.Entry<String, TemplatePriceMultiplier> entry : templateMultipliers.entrySet()) {
+            ConfigurationSection section = shopSettingsConfig.createSection("price-multipliers." + entry.getKey());
+            section.set("buy", entry.getValue().buy());
+            section.set("sell", entry.getValue().sell());
         }
         try {
             shopSettingsConfig.save(shopSettingsFile);
@@ -1711,6 +1856,23 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return 0;
         }
         return roundPrice(basePrice * multiplier);
+    }
+
+    private record TemplatePriceMultiplier(double buy, double sell) {
+        static final TemplatePriceMultiplier DEFAULT = new TemplatePriceMultiplier(1.0, 1.0);
+        static final double EPSILON = 1.0E-6;
+
+        boolean isDefault() {
+            return Math.abs(buy - 1.0) < EPSILON && Math.abs(sell - 1.0) < EPSILON;
+        }
+
+        TemplatePriceMultiplier withBuy(double newBuy) {
+            return new TemplatePriceMultiplier(newBuy, sell);
+        }
+
+        TemplatePriceMultiplier withSell(double newSell) {
+            return new TemplatePriceMultiplier(buy, newSell);
+        }
     }
 
     private double roundPrice(double value) {
