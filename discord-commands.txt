@@ -12,7 +12,9 @@ Utilise ce message pour informer les joueurs et le staff sur Discord.
    • `/removemoney Joueur Montant` : retire le montant du solde du joueur (ne peut pas descendre sous 0).
 
 3. Gestion avancée des boutiques (administrateurs)
-   • `/shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>` : multiplie ou réinitialise les prix d'achat/vente d'une boutique entière.
+   • `/shop setting overallprice buy <multiplicateur|reset>` : ajuste le multiplicateur global d'achat (ex: `buy 1.8`).
+   • `/shop setting overallprice sell <multiplicateur|reset>` : ajuste le multiplicateur global de vente.
+   • `/shop setting overallprice <template> [buy|sell|both] <multiplicateur|reset>` : applique des multiplicateurs ciblés à un template précis.
    • `/shoppnj [cancel]` : ouvre la sélection de style (biome + métier) pour les PNJ de boutique, puis cliquez sur le PNJ à modifier.
 
 4. Notes importantes

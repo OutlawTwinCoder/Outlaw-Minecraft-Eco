@@ -136,6 +136,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private final Map<UUID, PendingListingInput> pendingListingInputs = new HashMap<>();
     private final List<Material> selectableMaterials;
     private final Map<String, TemplateMultiplier> templateMultipliers = new HashMap<>();
+    private TemplateMultiplier globalMultiplier = new TemplateMultiplier(DEFAULT_MULTIPLIER, DEFAULT_MULTIPLIER);
     private final Map<UUID, VillagerStyle> pendingNpcStyles = new HashMap<>();
     private BukkitTask nameVisibilityTask;
 
@@ -264,6 +265,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private void loadPriceMultipliers() {
         templateMultipliers.clear();
+        globalMultiplier = new TemplateMultiplier(DEFAULT_MULTIPLIER, DEFAULT_MULTIPLIER);
         if (shopSettingsConfig == null) {
             return;
         }
@@ -273,40 +275,55 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
         for (String key : section.getKeys(false)) {
             String normalized = key.toLowerCase(Locale.ROOT);
-            if (!templates.containsKey(normalized)) {
+            if (normalized.equals("global")) {
+                TemplateMultiplier multiplier = parseMultiplier(section, key);
+                if (multiplier != null) {
+                    globalMultiplier = multiplier;
+                }
+                continue;
+            }
+            if (!templates.containsKey(normalized) && !GENERAL_TEMPLATE_KEY.equals(normalized)) {
                 plugin.getLogger().warning("Multiplicateur défini pour un template inconnu: " + key);
             }
-            TemplateMultiplier multiplier;
-            if (section.isConfigurationSection(key)) {
-                ConfigurationSection templateSection = section.getConfigurationSection(key);
-                if (templateSection == null) {
-                    continue;
-                }
-                double buy = templateSection.getDouble("buy", DEFAULT_MULTIPLIER);
-                double sell = templateSection.getDouble("sell", DEFAULT_MULTIPLIER);
-                if (templateSection.contains("value")) {
-                    double legacy = templateSection.getDouble("value", DEFAULT_MULTIPLIER);
-                    buy = legacy;
-                    sell = legacy;
-                }
-                if (buy <= 0 || sell <= 0) {
-                    plugin.getLogger().warning("Multiplicateur invalide pour le template '" + key + "'.");
-                    continue;
-                }
-                multiplier = new TemplateMultiplier(buy, sell);
-            } else {
-                double legacyValue = section.getDouble(key, DEFAULT_MULTIPLIER);
-                if (legacyValue <= 0) {
-                    plugin.getLogger().warning("Multiplicateur invalide pour le template '" + key + "'.");
-                    continue;
-                }
-                multiplier = new TemplateMultiplier(legacyValue, legacyValue);
+            TemplateMultiplier multiplier = parseMultiplier(section, key);
+            if (multiplier == null) {
+                continue;
             }
             if (isDefaultMultiplier(multiplier.buy()) && isDefaultMultiplier(multiplier.sell())) {
                 continue;
             }
             templateMultipliers.put(normalized, multiplier);
         }
+    }
+
+    private TemplateMultiplier parseMultiplier(ConfigurationSection section, String key) {
+        TemplateMultiplier multiplier;
+        if (section.isConfigurationSection(key)) {
+            ConfigurationSection templateSection = section.getConfigurationSection(key);
+            if (templateSection == null) {
+                return null;
+            }
+            double buy = templateSection.getDouble("buy", DEFAULT_MULTIPLIER);
+            double sell = templateSection.getDouble("sell", DEFAULT_MULTIPLIER);
+            if (templateSection.contains("value")) {
+                double legacy = templateSection.getDouble("value", DEFAULT_MULTIPLIER);
+                buy = legacy;
+                sell = legacy;
+            }
+            if (buy <= 0 || sell <= 0) {
+                plugin.getLogger().warning("Multiplicateur invalide pour l'entrée '" + key + "'.");
+                return null;
+            }
+            multiplier = new TemplateMultiplier(buy, sell);
+        } else {
+            double legacyValue = section.getDouble(key, DEFAULT_MULTIPLIER);
+            if (legacyValue <= 0) {
+                plugin.getLogger().warning("Multiplicateur invalide pour l'entrée '" + key + "'.");
+                return null;
+            }
+            multiplier = new TemplateMultiplier(legacyValue, legacyValue);
+        }
+        return multiplier;
     }
 
     private void parseOffer(String context, List<ShopOffer> offers, Map<?, ?> entry) {
@@ -599,7 +616,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§e/shop removeitem <template> <item>§7 - retirer un objet");
             player.sendMessage("§e/shop reloadtemplates§7 - recharger les templates");
             player.sendMessage("§e/shop setting price§7 - définir les prix via le menu créatif");
-            player.sendMessage("§e/shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>§7 - ajuster les prix d'une boutique");
+            player.sendMessage("§e/shop setting overallprice [template] <buy|sell|both> <multiplicateur|reset>§7 - ajuster les prix (laisser le template vide = global)");
             player.sendMessage("§e/shoppnj§7 - choisir un style de PNJ puis cliquer sur la boutique");
         }
     }
@@ -879,57 +896,86 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private void sendSettingUsage(Player player) {
         player.sendMessage("§cUsage: /shop setting price");
-        player.sendMessage("§cUsage: /shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>");
+        player.sendMessage("§cUsage global: /shop setting overallprice <buy|sell|both> <multiplicateur|reset>");
+        player.sendMessage("§cUsage par template: /shop setting overallprice <template> [buy|sell|both] <multiplicateur|reset>");
     }
 
     private boolean handleOverallPriceSetting(Player player, String[] args) {
-        if (args.length < 4) {
-            player.sendMessage("§cUsage: /shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>");
+        if (args.length < 3) {
+            sendSettingUsage(player);
             return true;
         }
-        String templateKey = args[2].toLowerCase(Locale.ROOT);
-        ShopTemplate template = templates.get(templateKey);
-        if (template == null) {
-            player.sendMessage("§cTemplate introuvable.");
-            return true;
-        }
-        String displayName = ChatColor.stripColor(template.getDisplayName());
-        if (displayName == null || displayName.isBlank()) {
-            displayName = templateKey;
-        }
-        int index = 3;
-        PriceTarget target = PriceTarget.BOTH;
-        if (args.length >= 5) {
-            PriceTarget parsed = PriceTarget.fromArg(args[3]);
-            if (parsed != null) {
-                target = parsed;
-                index = 4;
-            }
+
+        int index = 2;
+        String potentialTemplate = args[index].toLowerCase(Locale.ROOT);
+        PriceTarget target;
+        String templateKey = null;
+        ShopTemplate template = null;
+        String displayName = null;
+
+        PriceTarget asTarget = PriceTarget.fromArg(potentialTemplate);
+        if (asTarget != null) {
+            target = asTarget;
+            index++;
         } else {
-            PriceTarget parsed = PriceTarget.fromArg(args[3]);
-            if (parsed != null) {
-                player.sendMessage("§cUsage: /shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>");
-                return true;
+            templateKey = potentialTemplate;
+            if (templateKey.equals(GENERAL_TEMPLATE_KEY)) {
+                displayName = ChatColor.stripColor(GENERAL_DISPLAY_NAME);
+            } else {
+                template = templates.get(templateKey);
+                if (template == null) {
+                    player.sendMessage("§cTemplate introuvable.");
+                    return true;
+                }
+                displayName = ChatColor.stripColor(template.getDisplayName());
+            }
+            if (displayName == null || displayName.isBlank()) {
+                displayName = templateKey;
+            }
+            target = PriceTarget.BOTH;
+            index++;
+            if (index < args.length) {
+                PriceTarget parsed = PriceTarget.fromArg(args[index]);
+                if (parsed != null) {
+                    target = parsed;
+                    index++;
+                }
             }
         }
+
         if (index >= args.length) {
-            player.sendMessage("§cUsage: /shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>");
+            sendSettingUsage(player);
             return true;
         }
+
         String valueArg = args[index];
         if (valueArg.equalsIgnoreCase("reset")) {
-            boolean removed = resetTemplatePriceMultiplier(templateKey, target);
-            if (removed) {
-                switch (target) {
-                    case BUY -> player.sendMessage("§aMultiplicateur d'achat réinitialisé pour §e" + displayName + "§a.");
-                    case SELL -> player.sendMessage("§aMultiplicateur de vente réinitialisé pour §e" + displayName + "§a.");
-                    case BOTH -> player.sendMessage("§aMultiplicateurs réinitialisés pour §e" + displayName + "§a.");
+            if (templateKey == null) {
+                boolean changed = resetGlobalPriceMultiplier(target);
+                if (changed) {
+                    switch (target) {
+                        case BUY -> player.sendMessage("§aMultiplicateur global d'achat réinitialisé.");
+                        case SELL -> player.sendMessage("§aMultiplicateur global de vente réinitialisé.");
+                        case BOTH -> player.sendMessage("§aMultiplicateurs globaux réinitialisés.");
+                    }
+                } else {
+                    player.sendMessage("§7Les valeurs globales utilisent déjà les paramètres par défaut.");
                 }
             } else {
-                player.sendMessage("§7Ce template utilise déjà les valeurs par défaut pour cette option.");
+                boolean removed = resetTemplatePriceMultiplier(templateKey, target);
+                if (removed) {
+                    switch (target) {
+                        case BUY -> player.sendMessage("§aMultiplicateur d'achat réinitialisé pour §e" + displayName + "§a.");
+                        case SELL -> player.sendMessage("§aMultiplicateur de vente réinitialisé pour §e" + displayName + "§a.");
+                        case BOTH -> player.sendMessage("§aMultiplicateurs réinitialisés pour §e" + displayName + "§a.");
+                    }
+                } else {
+                    player.sendMessage("§7Ce template utilise déjà les valeurs par défaut pour cette option.");
+                }
             }
             return true;
         }
+
         double value;
         try {
             value = Double.parseDouble(valueArg.replace(',', '.'));
@@ -941,11 +987,21 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§cLe multiplicateur doit être supérieur à 0.");
             return true;
         }
-        setTemplatePriceMultiplier(templateKey, target, value);
-        switch (target) {
-            case BUY -> player.sendMessage("§aMultiplicateur d'achat pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
-            case SELL -> player.sendMessage("§aMultiplicateur de vente pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
-            case BOTH -> player.sendMessage("§aMultiplicateurs d'achat et de vente pour §e" + displayName + "§a définis à §ex" + formatPrice(value) + "§a.");
+
+        if (templateKey == null) {
+            setGlobalPriceMultiplier(target, value);
+            switch (target) {
+                case BUY -> player.sendMessage("§aMultiplicateur global d'achat défini à §ex" + formatPrice(value) + "§a.");
+                case SELL -> player.sendMessage("§aMultiplicateur global de vente défini à §ex" + formatPrice(value) + "§a.");
+                case BOTH -> player.sendMessage("§aMultiplicateurs globaux d'achat et de vente définis à §ex" + formatPrice(value) + "§a.");
+            }
+        } else {
+            setTemplatePriceMultiplier(templateKey, target, value);
+            switch (target) {
+                case BUY -> player.sendMessage("§aMultiplicateur d'achat pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+                case SELL -> player.sendMessage("§aMultiplicateur de vente pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+                case BOTH -> player.sendMessage("§aMultiplicateurs d'achat et de vente pour §e" + displayName + "§a définis à §ex" + formatPrice(value) + "§a.");
+            }
         }
         player.sendMessage("§7Réouvrez la boutique pour voir les nouveaux prix.");
         return true;
@@ -1958,20 +2014,33 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 return filterByPrefix(List.of("general"), args[2]);
             }
             if (isAdmin && args[0].equalsIgnoreCase("setting") && args[1].equalsIgnoreCase("overallprice")) {
-                return filterByPrefix(templates.keySet(), args[2]);
+                Set<String> options = new LinkedHashSet<>(templates.keySet());
+                options.add(GENERAL_TEMPLATE_KEY);
+                options.addAll(List.of("buy", "sell", "both"));
+                return filterByPrefix(options, args[2]);
             }
         }
 
         if (args.length == 4) {
             if (isAdmin && args[0].equalsIgnoreCase("setting") && args[1].equalsIgnoreCase("overallprice")) {
-                List<String> options = new ArrayList<>(List.of("buy", "sell", "both", "reset", "1", "1.5", "2", "2.3", "2.5"));
+                PriceTarget thirdArgTarget = PriceTarget.fromArg(args[2]);
+                if (thirdArgTarget != null) {
+                    return filterByPrefix(List.of("reset", "1", "1.5", "2", "2.3", "2.5"), args[3]);
+                }
+                Set<String> options = new LinkedHashSet<>(List.of("buy", "sell", "both", "reset", "1", "1.5", "2", "2.3", "2.5"));
                 return filterByPrefix(options, args[3]);
             }
         }
 
         if (args.length == 5) {
             if (isAdmin && args[0].equalsIgnoreCase("setting") && args[1].equalsIgnoreCase("overallprice")) {
-                return filterByPrefix(List.of("reset", "1", "1.5", "2", "2.3", "2.5"), args[4]);
+                if (PriceTarget.fromArg(args[2]) != null) {
+                    return List.of();
+                }
+                PriceTarget target = PriceTarget.fromArg(args[3]);
+                if (target != null) {
+                    return filterByPrefix(List.of("reset", "1", "1.5", "2", "2.3", "2.5"), args[4]);
+                }
             }
         }
 
@@ -2029,19 +2098,21 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     }
 
     private double getBuyMultiplier(String templateKey) {
-        if (templateKey == null) {
-            return DEFAULT_MULTIPLIER;
+        double templateMultiplier = DEFAULT_MULTIPLIER;
+        if (templateKey != null) {
+            TemplateMultiplier multiplier = templateMultipliers.get(templateKey.toLowerCase(Locale.ROOT));
+            templateMultiplier = multiplier != null ? multiplier.buy() : DEFAULT_MULTIPLIER;
         }
-        TemplateMultiplier multiplier = templateMultipliers.get(templateKey.toLowerCase(Locale.ROOT));
-        return multiplier != null ? multiplier.buy() : DEFAULT_MULTIPLIER;
+        return roundMultiplier(globalMultiplier.buy() * templateMultiplier);
     }
 
     private double getSellMultiplier(String templateKey) {
-        if (templateKey == null) {
-            return DEFAULT_MULTIPLIER;
+        double templateMultiplier = DEFAULT_MULTIPLIER;
+        if (templateKey != null) {
+            TemplateMultiplier multiplier = templateMultipliers.get(templateKey.toLowerCase(Locale.ROOT));
+            templateMultiplier = multiplier != null ? multiplier.sell() : DEFAULT_MULTIPLIER;
         }
-        TemplateMultiplier multiplier = templateMultipliers.get(templateKey.toLowerCase(Locale.ROOT));
-        return multiplier != null ? multiplier.sell() : DEFAULT_MULTIPLIER;
+        return roundMultiplier(globalMultiplier.sell() * templateMultiplier);
     }
 
     private void setTemplatePriceMultiplier(String templateKey, PriceTarget target, double value) {
@@ -2108,11 +2179,63 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         return true;
     }
 
+    private void setGlobalPriceMultiplier(PriceTarget target, double value) {
+        double buy = globalMultiplier.buy();
+        double sell = globalMultiplier.sell();
+        switch (target) {
+            case BUY -> buy = value;
+            case SELL -> sell = value;
+            case BOTH -> {
+                buy = value;
+                sell = value;
+            }
+        }
+        globalMultiplier = new TemplateMultiplier(buy, sell);
+        savePriceMultipliers();
+    }
+
+    private boolean resetGlobalPriceMultiplier(PriceTarget target) {
+        double buy = globalMultiplier.buy();
+        double sell = globalMultiplier.sell();
+        boolean changed;
+        switch (target) {
+            case BUY -> {
+                changed = !isDefaultMultiplier(buy);
+                buy = DEFAULT_MULTIPLIER;
+            }
+            case SELL -> {
+                changed = !isDefaultMultiplier(sell);
+                sell = DEFAULT_MULTIPLIER;
+            }
+            case BOTH -> {
+                changed = !isDefaultMultiplier(buy) || !isDefaultMultiplier(sell);
+                if (!changed) {
+                    return false;
+                }
+                globalMultiplier = new TemplateMultiplier(DEFAULT_MULTIPLIER, DEFAULT_MULTIPLIER);
+                savePriceMultipliers();
+                return true;
+            }
+            default -> changed = false;
+        }
+        if (!changed) {
+            return false;
+        }
+        globalMultiplier = new TemplateMultiplier(buy, sell);
+        savePriceMultipliers();
+        return true;
+    }
+
     private void savePriceMultipliers() {
         if (shopSettingsConfig == null) {
             shopSettingsConfig = new YamlConfiguration();
         }
         shopSettingsConfig.set("price-multipliers", null);
+        if (!isDefaultMultiplier(globalMultiplier.buy()) || !isDefaultMultiplier(globalMultiplier.sell())) {
+            String base = "price-multipliers.global";
+            shopSettingsConfig.set(base + ".buy", globalMultiplier.buy());
+            shopSettingsConfig.set(base + ".sell", globalMultiplier.sell());
+        }
         for (Map.Entry<String, TemplateMultiplier> entry : templateMultipliers.entrySet()) {
             String base = "price-multipliers." + entry.getKey();
             shopSettingsConfig.set(base + ".buy", entry.getValue().buy());
@@ -2127,6 +2250,10 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private boolean isDefaultMultiplier(double value) {
         return Math.abs(value - DEFAULT_MULTIPLIER) < 1.0E-6;
+    }
+
+    private double roundMultiplier(double value) {
+        return Math.round(value * 1000.0) / 1000.0;
     }
 
     private enum PriceTarget {
