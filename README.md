@@ -45,6 +45,8 @@ Plugin Paper/Spigot pour offrir un système d'économie centralisé avec boutiqu
 | `/shop removeitem <template> <item>` | Retire un objet d'un template simple. |
 | `/shop reloadtemplates` | Recharge les templates depuis le fichier YAML. |
 | `/shop setting price` | Ouvre le menu de définition des prix pour les items et met à jour `shop-templates.yml`. |
+| `/shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>` | Ajuste les multiplicateurs d'achat/vente d'une boutique. |
+| `/shoppnj [cancel]` | Choisit un biome et un métier pour un PNJ de boutique, puis cliquez sur le PNJ cible. |
 
 ## Configuration (`config.yml`)
 ```yaml

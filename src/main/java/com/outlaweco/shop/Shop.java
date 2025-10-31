@@ -12,6 +12,8 @@ public class Shop {
     private final String templateKey;
     private final Location location;
     private Villager villager;
+    private Villager.Type villagerType = Villager.Type.PLAINS;
+    private Villager.Profession villagerProfession = Villager.Profession.NONE;
 
     public Shop(UUID id, String templateKey, Location location) {
         this.id = id;
@@ -39,6 +41,26 @@ public class Shop {
         this.villager = villager;
     }
 
+    public Villager.Type getVillagerType() {
+        return villagerType;
+    }
+
+    public void setVillagerType(Villager.Type villagerType) {
+        if (villagerType != null) {
+            this.villagerType = villagerType;
+        }
+    }
+
+    public Villager.Profession getVillagerProfession() {
+        return villagerProfession;
+    }
+
+    public void setVillagerProfession(Villager.Profession villagerProfession) {
+        if (villagerProfession != null) {
+            this.villagerProfession = villagerProfession;
+        }
+    }
+
     public Villager spawn(ShopTemplate template) {
         Location spawnLocation = location.clone();
         Villager spawned = (Villager) location.getWorld().spawnEntity(spawnLocation, EntityType.VILLAGER);
@@ -47,7 +69,9 @@ public class Shop {
         String display = template != null ? template.getDisplayName() : "§eBoutique";
         spawned.setCustomName(display);
         spawned.setCustomNameVisible(false);
-        spawned.setVillagerType(Villager.Type.PLAINS);
+        spawned.setVillagerType(villagerType);
+        spawned.setProfession(villagerProfession);
+        spawned.setSilent(true);
         this.villager = spawned;
         return spawned;
     }

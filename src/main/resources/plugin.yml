@@ -6,17 +6,29 @@ authors:
   - OutlawMC
 commands:
   balance:
-    description: Check your balance
-    usage: /balance
+    description: Vérifie ton solde ou consulte celui des autres (admin)
+    usage: /balance [joueur|all]
   pay:
     description: Send money to another player
     usage: /pay <player> <amount>
+  givemoney:
+    description: Donne de l'argent à un joueur (admin)
+    usage: /givemoney <player> <amount>
+    permission: outlawecoadmin
+  removemoney:
+    description: Retire de l'argent à un joueur (admin)
+    usage: /removemoney <player> <amount>
+    permission: outlawecoadmin
   trade:
     description: Start a trade with another player
     usage: /trade <player>
   shop:
     description: Manage and open shops
     usage: /shop <open|create|remove|list>
+  shoppnj:
+    description: Choisir un style de PNJ de boutique (admin)
+    usage: /shoppnj [cancel]
+    permission: outlawecoadmin
 permissions:
   outlaweco.use:
     description: Allows opening shop templates

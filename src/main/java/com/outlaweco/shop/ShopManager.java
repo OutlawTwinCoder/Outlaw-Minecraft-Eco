@@ -25,6 +25,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -51,6 +52,9 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private static final double SHOP_NAME_VIEW_DISTANCE_SQUARED = 25 * 25;
     private static final Map<String, PotionType> POTION_TYPE_ALIASES = createPotionAliasMap();
     private static final Map<PotionType, String> POTION_TYPE_NAMES = createPotionNameMap();
+    private static final Map<Villager.Type, Material> VILLAGER_TYPE_ICONS = createVillagerTypeIcons();
+    private static final Map<Villager.Profession, Material> VILLAGER_PROFESSION_ICONS = createVillagerProfessionIcons();
+    private static final double DEFAULT_MULTIPLIER = 1.0;
 
     private static Map<String, PotionType> createPotionAliasMap() {
         Map<String, PotionType> map = new HashMap<>();
@@ -82,6 +86,38 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         return map;
     }
 
+    private static Map<Villager.Type, Material> createVillagerTypeIcons() {
+        Map<Villager.Type, Material> map = new EnumMap<>(Villager.Type.class);
+        map.put(Villager.Type.DESERT, Material.SANDSTONE);
+        map.put(Villager.Type.JUNGLE, Material.JUNGLE_LOG);
+        map.put(Villager.Type.PLAINS, Material.WHEAT);
+        map.put(Villager.Type.SAVANNA, Material.ACACIA_LOG);
+        map.put(Villager.Type.SNOW, Material.SNOWBALL);
+        map.put(Villager.Type.SWAMP, Material.SLIME_BALL);
+        map.put(Villager.Type.TAIGA, Material.SPRUCE_LOG);
+        return map;
+    }
+
+    private static Map<Villager.Profession, Material> createVillagerProfessionIcons() {
+        Map<Villager.Profession, Material> map = new EnumMap<>(Villager.Profession.class);
+        map.put(Villager.Profession.NONE, Material.EMERALD);
+        map.put(Villager.Profession.ARMORER, Material.BLAST_FURNACE);
+        map.put(Villager.Profession.BUTCHER, Material.SMOKER);
+        map.put(Villager.Profession.CARTOGRAPHER, Material.CARTOGRAPHY_TABLE);
+        map.put(Villager.Profession.CLERIC, Material.BREWING_STAND);
+        map.put(Villager.Profession.FARMER, Material.WHEAT);
+        map.put(Villager.Profession.FISHERMAN, Material.FISHING_ROD);
+        map.put(Villager.Profession.FLETCHER, Material.FLETCHING_TABLE);
+        map.put(Villager.Profession.LEATHERWORKER, Material.CAULDRON);
+        map.put(Villager.Profession.LIBRARIAN, Material.LECTERN);
+        map.put(Villager.Profession.MASON, Material.STONECUTTER);
+        map.put(Villager.Profession.NITWIT, Material.DEAD_BUSH);
+        map.put(Villager.Profession.SHEPHERD, Material.LOOM);
+        map.put(Villager.Profession.TOOLSMITH, Material.SMITHING_TABLE);
+        map.put(Villager.Profession.WEAPONSMITH, Material.GRINDSTONE);
+        return map;
+    }
+
     private final OutlawEconomyPlugin plugin;
     private final EconomyManager economyManager;
     private final File shopsFile;
@@ -99,7 +135,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private final Map<UUID, PendingPriceInput> pendingPriceInputs = new HashMap<>();
     private final Map<UUID, PendingListingInput> pendingListingInputs = new HashMap<>();
     private final List<Material> selectableMaterials;
-    private final Map<String, Double> templateMultipliers = new HashMap<>();
+    private final Map<String, TemplateMultiplier> templateMultipliers = new HashMap<>();
+    private final Map<UUID, VillagerStyle> pendingNpcStyles = new HashMap<>();
     private BukkitTask nameVisibilityTask;
 
     public ShopManager(OutlawEconomyPlugin plugin) {
@@ -235,16 +272,40 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return;
         }
         for (String key : section.getKeys(false)) {
-            double value = section.getDouble(key, 1.0);
-            if (value <= 0) {
-                plugin.getLogger().warning("Multiplicateur invalide pour le template '" + key + "'.");
-                continue;
-            }
             String normalized = key.toLowerCase(Locale.ROOT);
             if (!templates.containsKey(normalized)) {
                 plugin.getLogger().warning("Multiplicateur défini pour un template inconnu: " + key);
             }
-            templateMultipliers.put(normalized, value);
+            TemplateMultiplier multiplier;
+            if (section.isConfigurationSection(key)) {
+                ConfigurationSection templateSection = section.getConfigurationSection(key);
+                if (templateSection == null) {
+                    continue;
+                }
+                double buy = templateSection.getDouble("buy", DEFAULT_MULTIPLIER);
+                double sell = templateSection.getDouble("sell", DEFAULT_MULTIPLIER);
+                if (templateSection.contains("value")) {
+                    double legacy = templateSection.getDouble("value", DEFAULT_MULTIPLIER);
+                    buy = legacy;
+                    sell = legacy;
+                }
+                if (buy <= 0 || sell <= 0) {
+                    plugin.getLogger().warning("Multiplicateur invalide pour le template '" + key + "'.");
+                    continue;
+                }
+                multiplier = new TemplateMultiplier(buy, sell);
+            } else {
+                double legacyValue = section.getDouble(key, DEFAULT_MULTIPLIER);
+                if (legacyValue <= 0) {
+                    plugin.getLogger().warning("Multiplicateur invalide pour le template '" + key + "'.");
+                    continue;
+                }
+                multiplier = new TemplateMultiplier(legacyValue, legacyValue);
+            }
+            if (isDefaultMultiplier(multiplier.buy()) && isDefaultMultiplier(multiplier.sell())) {
+                continue;
+            }
+            templateMultipliers.put(normalized, multiplier);
         }
     }
 
@@ -365,6 +426,22 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             }
             Location loc = new Location(Bukkit.getWorld(worldName), x, y, z, yaw, pitch);
             Shop shop = new Shop(id, templateKey, loc);
+            String typeName = shopsConfig.getString(key + ".villager-type");
+            if (typeName != null && !typeName.isBlank()) {
+                try {
+                    shop.setVillagerType(Villager.Type.valueOf(typeName.toUpperCase(Locale.ROOT)));
+                } catch (IllegalArgumentException ex) {
+                    plugin.getLogger().warning("Type de PNJ invalide '" + typeName + "' pour la boutique " + key);
+                }
+            }
+            String professionName = shopsConfig.getString(key + ".villager-profession");
+            if (professionName != null && !professionName.isBlank()) {
+                try {
+                    shop.setVillagerProfession(Villager.Profession.valueOf(professionName.toUpperCase(Locale.ROOT)));
+                } catch (IllegalArgumentException ex) {
+                    plugin.getLogger().warning("Métier de PNJ invalide '" + professionName + "' pour la boutique " + key);
+                }
+            }
             spawnShopEntity(shop);
             shops.put(id, shop);
         }
@@ -415,6 +492,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         if (villager == null) {
             return;
         }
+        villager.setSilent(true);
         if (shop.getTemplateKey().equals(GENERAL_TEMPLATE_KEY)) {
             villager.setCustomName(GENERAL_DISPLAY_NAME);
         }
@@ -434,6 +512,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         shopsConfig.set(base + ".z", loc.getZ());
         shopsConfig.set(base + ".yaw", loc.getYaw());
         shopsConfig.set(base + ".pitch", loc.getPitch());
+        shopsConfig.set(base + ".villager-type", shop.getVillagerType().name());
+        shopsConfig.set(base + ".villager-profession", shop.getVillagerProfession().name());
         try {
             shopsConfig.save(shopsFile);
         } catch (IOException e) {
@@ -454,6 +534,13 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        String commandName = command.getName().toLowerCase(Locale.ROOT);
+        if (commandName.equals("shoppnj")) {
+            return handleNpcStyleCommand(sender, args);
+        }
+        if (!commandName.equals("shop")) {
+            return false;
+        }
         if (!(sender instanceof Player player)) {
             return handleNonPlayerCommand(sender, args);
         }
@@ -512,7 +599,8 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§e/shop removeitem <template> <item>§7 - retirer un objet");
             player.sendMessage("§e/shop reloadtemplates§7 - recharger les templates");
             player.sendMessage("§e/shop setting price§7 - définir les prix via le menu créatif");
-            player.sendMessage("§e/shop setting overallprice <template> <multiplicateur|reset>§7 - ajuster tous les prix d'une boutique");
+            player.sendMessage("§e/shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>§7 - ajuster les prix d'une boutique");
+            player.sendMessage("§e/shoppnj§7 - choisir un style de PNJ puis cliquer sur la boutique");
         }
     }
 
@@ -765,14 +853,38 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
+    private boolean handleNpcStyleCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Cette commande est réservée aux joueurs.");
+            return true;
+        }
+        if (!player.hasPermission(PERMISSION_ADMIN)) {
+            player.sendMessage("§cVous n'avez pas la permission.");
+            return true;
+        }
+        if (args.length > 0 && args[0].equalsIgnoreCase("cancel")) {
+            if (pendingNpcStyles.remove(player.getUniqueId()) != null) {
+                player.sendMessage("§7Sélection de style PNJ annulée.");
+            } else {
+                player.sendMessage("§7Aucune sélection de style en cours.");
+            }
+            return true;
+        }
+        pendingNpcStyles.remove(player.getUniqueId());
+        openNpcTypeSelector(player);
+        player.sendMessage("§7Choisissez d'abord un biome, puis un métier, et cliquez ensuite sur le PNJ de boutique.");
+        player.sendMessage("§7Utilisez §c/shoppnj cancel§7 pour annuler.");
+        return true;
+    }
+
     private void sendSettingUsage(Player player) {
         player.sendMessage("§cUsage: /shop setting price");
-        player.sendMessage("§cUsage: /shop setting overallprice <template> <multiplicateur|reset>");
+        player.sendMessage("§cUsage: /shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>");
     }
 
     private boolean handleOverallPriceSetting(Player player, String[] args) {
         if (args.length < 4) {
-            player.sendMessage("§cUsage: /shop setting overallprice <template> <multiplicateur|reset>");
+            player.sendMessage("§cUsage: /shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>");
             return true;
         }
         String templateKey = args[2].toLowerCase(Locale.ROOT);
@@ -785,13 +897,36 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         if (displayName == null || displayName.isBlank()) {
             displayName = templateKey;
         }
-        String valueArg = args[3];
+        int index = 3;
+        PriceTarget target = PriceTarget.BOTH;
+        if (args.length >= 5) {
+            PriceTarget parsed = PriceTarget.fromArg(args[3]);
+            if (parsed != null) {
+                target = parsed;
+                index = 4;
+            }
+        } else {
+            PriceTarget parsed = PriceTarget.fromArg(args[3]);
+            if (parsed != null) {
+                player.sendMessage("§cUsage: /shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>");
+                return true;
+            }
+        }
+        if (index >= args.length) {
+            player.sendMessage("§cUsage: /shop setting overallprice <template> <buy|sell|both> <multiplicateur|reset>");
+            return true;
+        }
+        String valueArg = args[index];
         if (valueArg.equalsIgnoreCase("reset")) {
-            boolean removed = resetTemplatePriceMultiplier(templateKey);
+            boolean removed = resetTemplatePriceMultiplier(templateKey, target);
             if (removed) {
-                player.sendMessage("§aMultiplicateur réinitialisé pour §e" + displayName + "§a.");
+                switch (target) {
+                    case BUY -> player.sendMessage("§aMultiplicateur d'achat réinitialisé pour §e" + displayName + "§a.");
+                    case SELL -> player.sendMessage("§aMultiplicateur de vente réinitialisé pour §e" + displayName + "§a.");
+                    case BOTH -> player.sendMessage("§aMultiplicateurs réinitialisés pour §e" + displayName + "§a.");
+                }
             } else {
-                player.sendMessage("§7Ce template utilise déjà les prix par défaut.");
+                player.sendMessage("§7Ce template utilise déjà les valeurs par défaut pour cette option.");
             }
             return true;
         }
@@ -806,8 +941,12 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             player.sendMessage("§cLe multiplicateur doit être supérieur à 0.");
             return true;
         }
-        setTemplatePriceMultiplier(templateKey, value);
-        player.sendMessage("§aMultiplicateur de prix pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+        setTemplatePriceMultiplier(templateKey, target, value);
+        switch (target) {
+            case BUY -> player.sendMessage("§aMultiplicateur d'achat pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+            case SELL -> player.sendMessage("§aMultiplicateur de vente pour §e" + displayName + "§a défini à §ex" + formatPrice(value) + "§a.");
+            case BOTH -> player.sendMessage("§aMultiplicateurs d'achat et de vente pour §e" + displayName + "§a définis à §ex" + formatPrice(value) + "§a.");
+        }
         player.sendMessage("§7Réouvrez la boutique pour voir les nouveaux prix.");
         return true;
     }
@@ -956,11 +1095,12 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         int size = calculateInventorySize(Math.max(1, offers.size() + extraSlots));
         int maxSlots = backButton ? size - 1 : size;
         List<ShopOffer> visibleOffers = new ArrayList<>();
-        double multiplier = getPriceMultiplier(template.getKey());
+        double buyMultiplier = getBuyMultiplier(template.getKey());
+        double sellMultiplier = getSellMultiplier(template.getKey());
         for (int i = 0; i < offers.size() && i < maxSlots; i++) {
             ShopOffer offer = offers.get(i);
-            double buyPrice = applyMultiplier(offer.buyPrice(), multiplier);
-            double sellPrice = applyMultiplier(offer.sellPrice(), multiplier);
+            double buyPrice = applyMultiplier(offer.buyPrice(), buyMultiplier);
+            double sellPrice = applyMultiplier(offer.sellPrice(), sellMultiplier);
             visibleOffers.add(new ShopOffer(offer.item(), buyPrice, sellPrice));
         }
         ShopInventoryHolder holder = ShopInventoryHolder.forOffers(template.getKey(),
@@ -1132,13 +1272,203 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         player.openInventory(inventory);
     }
 
+    private void openNpcTypeSelector(Player player) {
+        List<Villager.Type> types = Arrays.asList(Villager.Type.values());
+        Inventory inventory = Bukkit.createInventory(NpcStyleInventoryHolder.forTypes(types), 27, "§6Style PNJ - Biome");
+        for (int i = 0; i < types.size() && i < 26; i++) {
+            Villager.Type type = types.get(i);
+            inventory.setItem(i, createNpcTypeIcon(type));
+        }
+        ItemStack cancel = new ItemStack(Material.BARRIER);
+        ItemMeta cancelMeta = cancel.getItemMeta();
+        if (cancelMeta != null) {
+            cancelMeta.setDisplayName("§cAnnuler");
+            cancelMeta.setLore(List.of("§7Fermer sans sélectionner."));
+            cancel.setItemMeta(cancelMeta);
+        }
+        inventory.setItem(26, cancel);
+        player.openInventory(inventory);
+    }
+
+    private void openNpcProfessionSelector(Player player, Villager.Type type) {
+        List<Villager.Profession> professions = Arrays.asList(Villager.Profession.values());
+        Inventory inventory = Bukkit.createInventory(
+                NpcStyleInventoryHolder.forProfessions(type, professions), 54,
+                "§6Style PNJ - Métier");
+        for (int i = 0; i < professions.size() && i < 45; i++) {
+            Villager.Profession profession = professions.get(i);
+            inventory.setItem(i, createNpcProfessionIcon(type, profession));
+        }
+
+        ItemStack back = new ItemStack(Material.ARROW);
+        ItemMeta backMeta = back.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName("§eChanger de biome");
+            backMeta.setLore(List.of("§7Revenir à la sélection des biomes."));
+            back.setItemMeta(backMeta);
+        }
+        inventory.setItem(45, back);
+
+        ItemStack cancel = new ItemStack(Material.BARRIER);
+        ItemMeta cancelMeta = cancel.getItemMeta();
+        if (cancelMeta != null) {
+            cancelMeta.setDisplayName("§cAnnuler");
+            cancelMeta.setLore(List.of("§7Fermer sans sélectionner."));
+            cancel.setItemMeta(cancelMeta);
+        }
+        inventory.setItem(53, cancel);
+
+        player.openInventory(inventory);
+    }
+
+    private ItemStack createNpcTypeIcon(Villager.Type type) {
+        Material icon = VILLAGER_TYPE_ICONS.getOrDefault(type, Material.EMERALD);
+        ItemStack item = new ItemStack(icon);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName("§e" + formatVillagerType(type));
+            meta.setLore(List.of("§7Utiliser ce biome."));
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private ItemStack createNpcProfessionIcon(Villager.Type type, Villager.Profession profession) {
+        Material icon = VILLAGER_PROFESSION_ICONS.getOrDefault(profession, Material.EMERALD_BLOCK);
+        ItemStack item = new ItemStack(icon);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName("§e" + formatVillagerProfession(profession));
+            meta.setLore(List.of(
+                    "§7Biome: §f" + formatVillagerType(type),
+                    "§7Cliquez pour enregistrer ce style."));
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private void handleNpcStyleInventoryClick(Player player, InventoryClickEvent event, NpcStyleInventoryHolder holder) {
+        int slot = event.getRawSlot();
+        int size = event.getView().getTopInventory().getSize();
+        if (slot >= size) {
+            return;
+        }
+        if (holder.getMode() == NpcStyleInventoryHolder.Mode.TYPE_SELECTION) {
+            if (slot == size - 1) {
+                player.closeInventory();
+                return;
+            }
+            List<Villager.Type> types = holder.getVillagerTypes();
+            if (slot >= types.size()) {
+                return;
+            }
+            Villager.Type selected = types.get(slot);
+            player.closeInventory();
+            openNpcProfessionSelector(player, selected);
+            return;
+        }
+        if (holder.getMode() == NpcStyleInventoryHolder.Mode.PROFESSION_SELECTION) {
+            if (slot == 45) {
+                openNpcTypeSelector(player);
+                return;
+            }
+            if (slot == size - 1) {
+                player.closeInventory();
+                return;
+            }
+            List<Villager.Profession> professions = holder.getVillagerProfessions();
+            if (slot >= professions.size()) {
+                return;
+            }
+            Villager.Profession profession = professions.get(slot);
+            Villager.Type type = holder.getSelectedType();
+            if (type == null) {
+                player.closeInventory();
+                return;
+            }
+            pendingNpcStyles.put(player.getUniqueId(), new VillagerStyle(type, profession));
+            player.closeInventory();
+            player.sendMessage("§aStyle sélectionné : §e" + formatVillagerProfession(profession)
+                    + " §7(" + formatVillagerType(type) + ")");
+            player.sendMessage("§7Cliquez sur un PNJ de boutique pour appliquer ce style.");
+        }
+    }
+
+    private void applyVillagerStyle(Shop shop, Villager villager, VillagerStyle style) {
+        Villager.Type type = style.type();
+        Villager.Profession profession = style.profession();
+        villager.setVillagerType(type);
+        villager.setProfession(profession);
+        villager.setVillagerLevel(5);
+        villager.setSilent(true);
+        shop.setVillagerType(type);
+        shop.setVillagerProfession(profession);
+        saveShop(shop);
+        updateShopNameVisibility();
+    }
+
+    private String formatVillagerType(Villager.Type type) {
+        return formatEnumName(type.name());
+    }
+
+    private String formatVillagerProfession(Villager.Profession profession) {
+        return formatEnumName(profession.name());
+    }
+
+    private String formatEnumName(String raw) {
+        String lower = raw.toLowerCase(Locale.ROOT).replace('_', ' ');
+        StringBuilder builder = new StringBuilder(lower.length());
+        boolean capitalize = true;
+        for (char c : lower.toCharArray()) {
+            if (capitalize && Character.isLetter(c)) {
+                builder.append(Character.toUpperCase(c));
+                capitalize = false;
+            } else {
+                builder.append(c);
+            }
+            if (c == ' ') {
+                capitalize = true;
+            }
+        }
+        return builder.toString();
+    }
+
     private int calculateInventorySize(int contentCount) {
         return 54;
     }
 
     @EventHandler
     public void onInteract(PlayerInteractAtEntityEvent event) {
+        Player player = event.getPlayer();
         Entity entity = event.getRightClicked();
+
+        VillagerStyle pendingStyle = pendingNpcStyles.get(player.getUniqueId());
+        if (pendingStyle != null) {
+            event.setCancelled(true);
+            if (!(entity instanceof Villager villager)) {
+                player.sendMessage("§cCliquez sur un PNJ de boutique pour appliquer le style sélectionné.");
+                return;
+            }
+            UUID styleShopId = getShopId(villager);
+            if (styleShopId == null) {
+                player.sendMessage("§cCe PNJ n'est pas géré par OutlawEconomy.");
+                return;
+            }
+            Shop styleShop = shops.get(styleShopId);
+            if (styleShop == null) {
+                return;
+            }
+            if (!player.hasPermission(PERMISSION_ADMIN)) {
+                player.sendMessage("§cVous n'avez pas la permission de modifier ce PNJ.");
+                return;
+            }
+            pendingNpcStyles.remove(player.getUniqueId());
+            applyVillagerStyle(styleShop, villager, pendingStyle);
+            player.sendMessage("§aStyle appliqué: §e" + formatVillagerProfession(pendingStyle.profession())
+                    + " §7(" + formatVillagerType(pendingStyle.type()) + ")");
+            return;
+        }
+
         UUID shopId = getShopId(entity);
         if (shopId == null) {
             return;
@@ -1148,7 +1478,6 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         if (shop == null) {
             return;
         }
-        Player player = event.getPlayer();
         if (!player.hasPermission(PERMISSION_USE) && !player.hasPermission(PERMISSION_ADMIN)) {
             player.sendMessage("§cVous n'avez pas la permission d'utiliser cette boutique.");
             return;
@@ -1167,25 +1496,31 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof ShopInventoryHolder holder)) {
-            return;
-        }
-        event.setCancelled(true);
+        InventoryHolder holder = event.getInventory().getHolder();
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
+        if (holder instanceof NpcStyleInventoryHolder npcHolder) {
+            event.setCancelled(true);
+            handleNpcStyleInventoryClick(player, event, npcHolder);
+            return;
+        }
+        if (!(holder instanceof ShopInventoryHolder shopHolder)) {
+            return;
+        }
+        event.setCancelled(true);
         int slot = event.getRawSlot();
         if (slot >= event.getView().getTopInventory().getSize()) {
             return;
         }
-        ShopInventoryType type = holder.getType();
+        ShopInventoryType type = shopHolder.getType();
         if (type == ShopInventoryType.CATEGORIES) {
-            ShopTemplate template = templates.get(holder.getTemplateKey());
+            ShopTemplate template = templates.get(shopHolder.getTemplateKey());
             if (template == null) {
                 player.closeInventory();
                 return;
             }
-            List<ShopCategory> categories = holder.getCategories();
+            List<ShopCategory> categories = shopHolder.getCategories();
             if (slot >= categories.size()) {
                 return;
             }
@@ -1195,12 +1530,12 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
 
         if (type == ShopInventoryType.OFFERS) {
-            ShopTemplate template = templates.get(holder.getTemplateKey());
+            ShopTemplate template = templates.get(shopHolder.getTemplateKey());
             if (template == null) {
                 player.closeInventory();
                 return;
             }
-            if (holder.hasBackButton() && slot == event.getInventory().getSize() - 1) {
+            if (shopHolder.hasBackButton() && slot == event.getInventory().getSize() - 1) {
                 openCategorySelection(player, template);
                 return;
             }
@@ -1208,7 +1543,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             if (current == null || current.getType() == Material.AIR) {
                 return;
             }
-            List<ShopOffer> offers = holder.getOffers();
+            List<ShopOffer> offers = shopHolder.getOffers();
             if (slot >= offers.size()) {
                 return;
             }
@@ -1222,49 +1557,50 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
 
         if (type == ShopInventoryType.PRICE_SELECTOR) {
-            if (slot == 45 && holder.getPage() > 0) {
-                openPriceSelector(player, holder.getPage() - 1);
+            if (slot == 45 && shopHolder.getPage() > 0) {
+                openPriceSelector(player, shopHolder.getPage() - 1);
                 return;
             }
-            if (slot == 53 && holder.getPage() < holder.getTotalPages() - 1) {
-                openPriceSelector(player, holder.getPage() + 1);
+            if (slot == 53 && shopHolder.getPage() < shopHolder.getTotalPages() - 1) {
+                openPriceSelector(player, shopHolder.getPage() + 1);
                 return;
             }
-            if (slot >= holder.getMaterials().size()) {
+            if (slot >= shopHolder.getMaterials().size()) {
                 return;
             }
             ItemStack current = event.getCurrentItem();
             if (current == null || current.getType() == Material.AIR) {
                 return;
             }
-            Material material = holder.getMaterials().get(slot);
+            Material material = shopHolder.getMaterials().get(slot);
             player.closeInventory();
-            pendingPriceInputs.put(player.getUniqueId(), new PendingPriceInput(material, holder.getPage()));
+            pendingPriceInputs.put(player.getUniqueId(), new PendingPriceInput(material, shopHolder.getPage()));
             player.sendMessage("§eEntrez le prix pour §6" + formatMaterialName(material) + "§e dans le chat (ou 'cancel').");
             return;
         }
 
         if (type == ShopInventoryType.GENERAL_STORE) {
-            if (slot == 45 && holder.getPage() > 0) {
-                openGeneralStore(player, holder.getPage() - 1);
+            if (slot == 45 && shopHolder.getPage() > 0) {
+                openGeneralStore(player, shopHolder.getPage() - 1);
                 return;
             }
-            if (slot == 53 && holder.getPage() < holder.getTotalPages() - 1) {
-                openGeneralStore(player, holder.getPage() + 1);
+            if (slot == 53 && shopHolder.getPage() < shopHolder.getTotalPages() - 1) {
+                openGeneralStore(player, shopHolder.getPage() + 1);
                 return;
             }
             if (slot == 49) {
-                handleStartListing(player, holder.getPage());
+                player.closeInventory();
+                handleStartListing(player, shopHolder.getPage());
                 return;
             }
-            if (slot >= holder.getGeneralListings().size()) {
+            if (slot >= shopHolder.getGeneralListings().size()) {
                 return;
             }
             ItemStack current = event.getCurrentItem();
             if (current == null || current.getType() == Material.AIR) {
                 return;
             }
-            handleListingInteraction(player, holder.getGeneralListings().get(slot), holder.getPage());
+            handleListingInteraction(player, shopHolder.getGeneralListings().get(slot), shopHolder.getPage());
         }
     }
 
@@ -1550,11 +1886,25 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             giveItemBack(event.getPlayer(), listing.item());
         }
         pendingPriceInputs.remove(uuid);
+        pendingNpcStyles.remove(uuid);
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!(sender instanceof Player player)) {
+            return List.of();
+        }
+        String commandName = command.getName().toLowerCase(Locale.ROOT);
+        if (commandName.equals("shoppnj")) {
+            if (!player.hasPermission(PERMISSION_ADMIN)) {
+                return List.of();
+            }
+            if (args.length == 1) {
+                return filterByPrefix(List.of("cancel"), args[0]);
+            }
+            return List.of();
+        }
+        if (!commandName.equals("shop")) {
             return List.of();
         }
         boolean isAdmin = player.hasPermission(PERMISSION_ADMIN);
@@ -1614,7 +1964,14 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
         if (args.length == 4) {
             if (isAdmin && args[0].equalsIgnoreCase("setting") && args[1].equalsIgnoreCase("overallprice")) {
-                return filterByPrefix(List.of("reset", "1", "1.5", "2", "2.3", "2.5"), args[3]);
+                List<String> options = new ArrayList<>(List.of("buy", "sell", "both", "reset", "1", "1.5", "2", "2.3", "2.5"));
+                return filterByPrefix(options, args[3]);
+            }
+        }
+
+        if (args.length == 5) {
+            if (isAdmin && args[0].equalsIgnoreCase("setting") && args[1].equalsIgnoreCase("overallprice")) {
+                return filterByPrefix(List.of("reset", "1", "1.5", "2", "2.3", "2.5"), args[4]);
             }
         }
 
@@ -1648,6 +2005,9 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             if (villager == null || villager.isDead()) {
                 continue;
             }
+            villager.setSilent(true);
+            villager.setVillagerType(shop.getVillagerType());
+            villager.setProfession(shop.getVillagerProfession());
             boolean visible = false;
             if (hasPlayers) {
                 Location villagerLocation = villager.getLocation();
@@ -1668,27 +2028,84 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
-    private double getPriceMultiplier(String templateKey) {
+    private double getBuyMultiplier(String templateKey) {
         if (templateKey == null) {
-            return 1.0;
+            return DEFAULT_MULTIPLIER;
         }
-        return templateMultipliers.getOrDefault(templateKey.toLowerCase(Locale.ROOT), 1.0);
+        TemplateMultiplier multiplier = templateMultipliers.get(templateKey.toLowerCase(Locale.ROOT));
+        return multiplier != null ? multiplier.buy() : DEFAULT_MULTIPLIER;
     }
 
-    private void setTemplatePriceMultiplier(String templateKey, double multiplier) {
+    private double getSellMultiplier(String templateKey) {
+        if (templateKey == null) {
+            return DEFAULT_MULTIPLIER;
+        }
+        TemplateMultiplier multiplier = templateMultipliers.get(templateKey.toLowerCase(Locale.ROOT));
+        return multiplier != null ? multiplier.sell() : DEFAULT_MULTIPLIER;
+    }
+
+    private void setTemplatePriceMultiplier(String templateKey, PriceTarget target, double value) {
         String normalized = templateKey.toLowerCase(Locale.ROOT);
-        if (Math.abs(multiplier - 1.0) < 1.0E-6) {
+        TemplateMultiplier current = templateMultipliers.get(normalized);
+        double buy = current != null ? current.buy() : DEFAULT_MULTIPLIER;
+        double sell = current != null ? current.sell() : DEFAULT_MULTIPLIER;
+        switch (target) {
+            case BUY -> buy = value;
+            case SELL -> sell = value;
+            case BOTH -> {
+                buy = value;
+                sell = value;
+            }
+        }
+        if (isDefaultMultiplier(buy) && isDefaultMultiplier(sell)) {
             templateMultipliers.remove(normalized);
         } else {
-            templateMultipliers.put(normalized, multiplier);
+            templateMultipliers.put(normalized, new TemplateMultiplier(buy, sell));
         }
         savePriceMultipliers();
     }
 
-    private boolean resetTemplatePriceMultiplier(String templateKey) {
-        boolean removed = templateMultipliers.remove(templateKey.toLowerCase(Locale.ROOT)) != null;
+    private boolean resetTemplatePriceMultiplier(String templateKey, PriceTarget target) {
+        String normalized = templateKey.toLowerCase(Locale.ROOT);
+        TemplateMultiplier current = templateMultipliers.get(normalized);
+        if (current == null) {
+            return false;
+        }
+        double buy = current.buy();
+        double sell = current.sell();
+        boolean changed;
+        switch (target) {
+            case BUY -> {
+                changed = !isDefaultMultiplier(buy);
+                buy = DEFAULT_MULTIPLIER;
+            }
+            case SELL -> {
+                changed = !isDefaultMultiplier(sell);
+                sell = DEFAULT_MULTIPLIER;
+            }
+            case BOTH -> {
+                changed = !isDefaultMultiplier(buy) || !isDefaultMultiplier(sell);
+                if (!changed) {
+                    return false;
+                }
+                templateMultipliers.remove(normalized);
+                savePriceMultipliers();
+                return true;
+            }
+            default -> {
+                changed = false;
+            }
+        }
+        if (!changed) {
+            return false;
+        }
+        if (isDefaultMultiplier(buy) && isDefaultMultiplier(sell)) {
+            templateMultipliers.remove(normalized);
+        } else {
+            templateMultipliers.put(normalized, new TemplateMultiplier(buy, sell));
+        }
         savePriceMultipliers();
-        return removed;
+        return true;
     }
 
     private void savePriceMultipliers() {
@@ -1696,14 +2113,44 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             shopSettingsConfig = new YamlConfiguration();
         }
         shopSettingsConfig.set("price-multipliers", null);
-        for (Map.Entry<String, Double> entry : templateMultipliers.entrySet()) {
-            shopSettingsConfig.set("price-multipliers." + entry.getKey(), entry.getValue());
+        for (Map.Entry<String, TemplateMultiplier> entry : templateMultipliers.entrySet()) {
+            String base = "price-multipliers." + entry.getKey();
+            shopSettingsConfig.set(base + ".buy", entry.getValue().buy());
+            shopSettingsConfig.set(base + ".sell", entry.getValue().sell());
         }
         try {
             shopSettingsConfig.save(shopSettingsFile);
         } catch (IOException e) {
             plugin.getLogger().severe("Impossible d'enregistrer shop-settings.yml: " + e.getMessage());
         }
+    }
+
+    private boolean isDefaultMultiplier(double value) {
+        return Math.abs(value - DEFAULT_MULTIPLIER) < 1.0E-6;
+    }
+
+    private enum PriceTarget {
+        BUY,
+        SELL,
+        BOTH;
+
+        static PriceTarget fromArg(String raw) {
+            if (raw == null) {
+                return null;
+            }
+            return switch (raw.toLowerCase(Locale.ROOT)) {
+                case "buy", "achat" -> BUY;
+                case "sell", "vente" -> SELL;
+                case "both", "all" -> BOTH;
+                default -> null;
+            };
+        }
+    }
+
+    private record TemplateMultiplier(double buy, double sell) {
+    }
+
+    private record VillagerStyle(Villager.Type type, Villager.Profession profession) {
     }
 
     private double applyMultiplier(double basePrice, double multiplier) {
