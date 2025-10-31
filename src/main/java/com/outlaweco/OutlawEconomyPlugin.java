@@ -3,6 +3,8 @@ package com.outlaweco;
 import com.outlaweco.api.EconomyAPI;
 import com.outlaweco.api.EconomyService;
 import com.outlaweco.economy.EconomyManager;
+import com.outlaweco.economy.command.BalanceCommand;
+import com.outlaweco.economy.command.MoneyAdminCommand;
 import com.outlaweco.shop.ShopManager;
 import com.outlaweco.trade.TradeManager;
 import org.bukkit.Bukkit;
@@ -60,21 +62,16 @@ public class OutlawEconomyPlugin extends JavaPlugin implements Listener {
     private void registerCommands() {
         PluginCommand balanceCommand = getCommand("balance");
         if (balanceCommand != null) {
-            balanceCommand.setExecutor((sender, command, label, args) -> {
-                if (!(sender instanceof org.bukkit.entity.Player player)) {
-                    sender.sendMessage("Only players can use this command.");
-                    return true;
-                }
-                double balance = economyManager.getBalance(player.getUniqueId());
-                sender.sendMessage("§aVotre argent: §e" + String.format("%.2f", balance));
-                return true;
-            });
+            BalanceCommand executor = new BalanceCommand(economyManager);
+            balanceCommand.setExecutor(executor);
+            balanceCommand.setTabCompleter(executor);
         }
 
         PluginCommand payCommand = getCommand("pay");
         if (payCommand != null) {
-            payCommand.setExecutor(new com.outlaweco.economy.command.PayCommand(economyManager));
-            payCommand.setTabCompleter(new com.outlaweco.economy.command.PayCommand(economyManager));
+            com.outlaweco.economy.command.PayCommand executor = new com.outlaweco.economy.command.PayCommand(economyManager);
+            payCommand.setExecutor(executor);
+            payCommand.setTabCompleter(executor);
         }
 
         PluginCommand tradeCommand = getCommand("trade");
@@ -87,6 +84,20 @@ public class OutlawEconomyPlugin extends JavaPlugin implements Listener {
         if (shopCommand != null) {
             shopCommand.setExecutor(shopManager);
             shopCommand.setTabCompleter(shopManager);
+        }
+
+        MoneyAdminCommand moneyAdminCommand = new MoneyAdminCommand(economyManager);
+
+        PluginCommand giveMoneyCommand = getCommand("givemoney");
+        if (giveMoneyCommand != null) {
+            giveMoneyCommand.setExecutor(moneyAdminCommand);
+            giveMoneyCommand.setTabCompleter(moneyAdminCommand);
+        }
+
+        PluginCommand removeMoneyCommand = getCommand("removemoney");
+        if (removeMoneyCommand != null) {
+            removeMoneyCommand.setExecutor(moneyAdminCommand);
+            removeMoneyCommand.setTabCompleter(moneyAdminCommand);
         }
     }
 

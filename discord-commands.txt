@@ -1,0 +1,19 @@
+=== Commandes d'économie pour Discord ===
+
+Utilise ce message pour informer les joueurs et le staff sur Discord.
+
+1. Vérifier un solde
+   • `/balance` : affiche ton propre argent (en jeu uniquement).
+   • `/balance Joueur` : affiche le solde du joueur indiqué (réservé aux administrateurs).
+   • `/balance all` : liste les soldes de tous les joueurs (réservé aux administrateurs).
+
+2. Ajouter ou retirer de l'argent (administrateurs)
+   • `/givemoney Joueur Montant` : ajoute le montant au solde du joueur.
+   • `/removemoney Joueur Montant` : retire le montant du solde du joueur (ne peut pas descendre sous 0).
+
+3. Notes importantes
+   • Les montants acceptent les décimales (ex: 12.5).
+   • Les commandes nécessitant des droits admins demandent la permission `outlawecoadmin`.
+   • Les joueurs ciblés peuvent être hors ligne, les changements seront appliqués dès leur prochaine connexion.
+
+Copie/colle ces informations sur Discord pour guider votre communauté.
