@@ -51,7 +51,7 @@ Plugin Paper/Spigot pour offrir un système d'économie centralisé avec boutiqu
 ```yaml
 economy:
   starting-balance: 100.0   # argent initial pour les nouveaux joueurs
-  currency-name: "OutlawCoin"
+  currency-name: "$"
 trade:
   request-timeout: 30       # durée (secondes) des demandes d'échange
 ```
@@ -64,7 +64,7 @@ Deux approches sont possibles pour interagir avec l'économie depuis un autre pl
 import com.outlaw.economy.api.EconomyAPI;
 
 UUID joueur = ...;
-EconomyAPI.deposit(joueur, 250.0, "Récompense de quête");          // ajoute 250 OutlawCoin
+EconomyAPI.deposit(joueur, 250.0, "Récompense de quête");          // ajoute 250 $
 boolean ok = EconomyAPI.withdraw(joueur, 50.0, "Achat boutique"); // retire 50 (false si solde insuffisant)
 double balance = EconomyAPI.getBalance(joueur);
 ```

@@ -53,6 +53,6 @@ public final class EconomyAPI {
     }
 
     public static String currencyCode() {
-        return get().map(EconomyService::currencyCode).orElse("Coins");
+        return get().map(EconomyService::currencyCode).orElse("$");
     }
 }

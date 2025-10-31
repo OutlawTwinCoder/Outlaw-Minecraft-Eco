@@ -176,7 +176,7 @@ public class EconomyManager implements EconomyService, Listener {
 
     @Override
     public String currencyCode() {
-        return plugin.getConfig().getString("economy.currency-name", "Coins");
+        return plugin.getConfig().getString("economy.currency-name", "$");
     }
 
     @EventHandler
