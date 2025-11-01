@@ -1,0 +1,17 @@
+Outlaw Economy is a complete economy suite for Paper and Spigot 1.20.4 servers. It combines secure player balances, NPC-driven shops, a global marketplace, and a polished trading system so communities can manage money without third-party dependencies.
+
+Key Features
+------------
+- Persistent player balances with customizable starting funds and currency formatting.
+- NPC shop templates for buying and selling items, including price multipliers and live adjustments.
+- General marketplace where players list items for sale with built-in price caps to prevent inflation.
+- Drag-and-drop selling flow that protects players from losing items when their price is rejected.
+- Player-to-player trade UI supporting shared inventories, configurable money offers, and confirmation safeguards.
+- Rapid profit alerts that notify staff when someone earns 20k within five minutes.
+- Vault bridge and lightweight API for seamless integration with other plugins.
+
+Why Choose Outlaw Economy?
+---------------------------
+Outlaw Economy was built for survival and faction servers that want responsive tools without sacrificing control. Administrators can fine-tune shops and balances, staff receive real-time alerts, and players enjoy intuitive menus that keep transactions safe.
+
+Whether you need a plug-and-play economy or a foundation for custom systems, Outlaw Economy keeps your server's finances organized, transparent, and fun.

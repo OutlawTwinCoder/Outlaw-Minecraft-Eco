@@ -48,6 +48,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private static final int PRICE_PAGE_SIZE = 45;
     private static final String GENERAL_TEMPLATE_KEY = "general";
     private static final String GENERAL_DISPLAY_NAME = "§2Magasin général";
+    private static final double GENERAL_MAX_LISTING_PRICE = 25_000d;
     private static final double SHOP_NAME_VIEW_DISTANCE_SQUARED = 25 * 25;
     private static final Map<String, PotionType> POTION_TYPE_ALIASES = createPotionAliasMap();
     private static final Map<PotionType, String> POTION_TYPE_NAMES = createPotionNameMap();
@@ -394,6 +395,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private void loadGeneralStore() {
         generalListings.clear();
+        boolean invalidFound = false;
         ConfigurationSection section = generalShopConfig.getConfigurationSection("listings");
         if (section == null) {
             return;
@@ -422,12 +424,20 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             if (price <= 0) {
                 continue;
             }
+            if (price > GENERAL_MAX_LISTING_PRICE) {
+                plugin.getLogger().warning("Annonce " + key + " ignorée: prix " + price + " au-dessus de la limite du magasin général.");
+                invalidFound = true;
+                continue;
+            }
             ItemStack item = section.getItemStack(key + ".item");
             if (item == null || item.getType() == Material.AIR) {
                 continue;
             }
             String sellerName = section.getString(key + ".seller-name", "Inconnu");
             generalListings.put(listingId, new GeneralShopListing(listingId, sellerId, sellerName, item, price));
+        }
+        if (invalidFound) {
+            saveGeneralStore();
         }
     }
 
@@ -1331,7 +1341,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 return;
             }
             if (slot == 49) {
-                handleStartListing(player, holder.getPage());
+                handleStartListing(player, holder.getPage(), event);
                 return;
             }
             if (slot >= holder.getGeneralListings().size()) {
@@ -1401,18 +1411,18 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         inventory.setContents(contents);
     }
 
-    private void handleStartListing(Player player, int page) {
-        ItemStack inHand = player.getInventory().getItemInMainHand();
-        if (inHand == null || inHand.getType() == Material.AIR) {
-            player.sendMessage("§cTenez l'objet à vendre dans votre main.");
+    private void handleStartListing(Player player, int page, InventoryClickEvent event) {
+        ItemStack cursor = event.getCursor();
+        if (cursor == null || cursor.getType() == Material.AIR) {
+            player.sendMessage("§cGlissez l'objet à vendre sur le bouton de vente.");
             return;
         }
         PendingListingInput existing = pendingListingInputs.remove(player.getUniqueId());
         if (existing != null) {
             giveItemBack(player, existing.item());
         }
-        ItemStack item = inHand.clone();
-        player.getInventory().setItemInMainHand(null);
+        ItemStack item = cursor.clone();
+        event.getView().setCursor(null);
         player.updateInventory();
         pendingListingInputs.put(player.getUniqueId(), new PendingListingInput(item, page));
         player.closeInventory();
@@ -1574,6 +1584,19 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
         if (value <= 0) {
             Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage("§cLe prix doit être supérieur à 0."));
+            return;
+        }
+        if (value > GENERAL_MAX_LISTING_PRICE) {
+            pendingListingInputs.remove(uuid);
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                giveItemBack(player, pending.item());
+                player.sendMessage(String.format(
+                        "§cLe prix maximum pour le magasin général est de §e%s %s§c. L'objet vous a été rendu.",
+                        formatPrice(GENERAL_MAX_LISTING_PRICE),
+                        economyManager.currencyCode()
+                ));
+                openGeneralStore(player, normalizeGeneralPage(pending.page()));
+            });
             return;
         }
         PendingListingInput removed = pendingListingInputs.remove(uuid);
