@@ -48,6 +48,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
     private static final int PRICE_PAGE_SIZE = 45;
     private static final String GENERAL_TEMPLATE_KEY = "general";
     private static final String GENERAL_DISPLAY_NAME = "§2Magasin général";
+    private static final double GENERAL_MAX_LISTING_PRICE = 25_000d;
     private static final double SHOP_NAME_VIEW_DISTANCE_SQUARED = 25 * 25;
     private static final Map<String, PotionType> POTION_TYPE_ALIASES = createPotionAliasMap();
     private static final Map<PotionType, String> POTION_TYPE_NAMES = createPotionNameMap();
@@ -394,6 +395,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
 
     private void loadGeneralStore() {
         generalListings.clear();
+        boolean invalidFound = false;
         ConfigurationSection section = generalShopConfig.getConfigurationSection("listings");
         if (section == null) {
             return;
@@ -422,12 +424,20 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             if (price <= 0) {
                 continue;
             }
+            if (price > GENERAL_MAX_LISTING_PRICE) {
+                plugin.getLogger().warning("Annonce " + key + " ignorée: prix " + price + " au-dessus de la limite du magasin général.");
+                invalidFound = true;
+                continue;
+            }
             ItemStack item = section.getItemStack(key + ".item");
             if (item == null || item.getType() == Material.AIR) {
                 continue;
             }
             String sellerName = section.getString(key + ".seller-name", "Inconnu");
             generalListings.put(listingId, new GeneralShopListing(listingId, sellerId, sellerName, item, price));
+        }
+        if (invalidFound) {
+            saveGeneralStore();
         }
     }
 
@@ -1574,6 +1584,14 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         }
         if (value <= 0) {
             Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage("§cLe prix doit être supérieur à 0."));
+            return;
+        }
+        if (value > GENERAL_MAX_LISTING_PRICE) {
+            Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage(String.format(
+                    "§cLe prix maximum pour le magasin général est de §e%s %s§c.",
+                    formatPrice(GENERAL_MAX_LISTING_PRICE),
+                    economyManager.currencyCode()
+            )));
             return;
         }
         PendingListingInput removed = pendingListingInputs.remove(uuid);
