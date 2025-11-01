@@ -1,0 +1,68 @@
+Outlaw Economy - Usage Guide
+============================
+
+This document walks administrators and players through the everyday workflows of the Outlaw Economy plugin.
+
+1. First Launch Checklist (Administrators)
+-----------------------------------------
+1. Upload the plugin JAR to `plugins/` and start the server once so the configuration files are generated.
+2. Edit `plugins/OutlawEconomy/config.yml` if you want a different starting balance or currency name, then restart the server.
+3. Give yourself the `outlawecoadmin` permission (or OP) to manage shops and player balances.
+4. If you use Vault, make sure Vault and any dependent plugins are loaded before the server finishes booting.
+
+2. Managing Player Money (Administrators)
+-----------------------------------------
+- Check a balance: `/balance <player>`
+- List every stored balance: `/balance all`
+- Add funds: `/givemoney <player> <amount>`
+- Remove funds: `/removemoney <player> <amount>`
+- Send money as a player: `/pay <player> <amount>`
+
+3. Setting Up NPC Shops
+-----------------------
+1. Stand where you want the NPC to appear.
+2. Run `/shop create <template>` to spawn a shop NPC using an existing template.
+3. Use `/shop list` to see currently placed NPCs and confirm the creation.
+4. To remove an NPC, look at it and run `/shop remove`.
+5. Adjust item offerings and prices with the admin subcommands:
+   - `/shop add itemshop <template> <item> <quantity> <buyPrice> [sellPrice]`
+   - `/shop removeitem <template> <item>`
+   - `/shop reloadtemplates`
+   - `/shop setting price`
+   - `/shop setting overallprice <template> [buy|sell] <multiplier|reset>`
+
+4. Opening Shops for Players
+----------------------------
+- Grant players the `outlaweco.use` permission so they can interact with shop NPCs.
+- Optionally give specific staff the `outlaweco.command.shopopen` permission to run `/shop open <template>` or `/shop open general` directly from chat.
+- Integrate with NPC plugins (for example FancyNPC) by executing `shop open %player% <template>` as the NPC's command.
+
+5. Using the General Marketplace (Players)
+-----------------------------------------
+1. Interact with the general market NPC or run `/shop open general` (permission required) to open the menu.
+2. Drag the item stack from your cursor onto the sell button to begin a listing.
+3. Enter a price at or below 25,000. Prices above the cap are rejected and your item is returned to you automatically.
+4. Confirm the listing to post it for sale.
+5. Browse available listings, click an entry to purchase, and confirm.
+
+6. Trading Safely with Other Players
+-----------------------------------
+1. Run `/trade <player>` to send a trade request. The request expires after the configured timeout (default 30 seconds).
+2. The target can accept with `/trade accept`, decline with `/trade deny`, or you can cancel with `/trade cancel`.
+3. Once both players are in the trade menu:
+   - Place items into your offer slots.
+   - Use the buttons to adjust the money amount you are offering.
+   - Click the confirm button when satisfied.
+4. The trade completes automatically when both players confirm with sufficient balances.
+
+7. Handling Rapid Earnings Alerts (Staff)
+----------------------------------------
+- The plugin monitors player profits. If someone earns 20,000 or more within five minutes, the staff chat receives an alert and you can teleport to investigate.
+
+8. Best Practices
+-----------------
+- Regularly back up `balances.yml` and `shops.yml` along with your world data.
+- Keep a test server to validate template changes before applying them to production.
+- Communicate the 25k listing limit to players so they understand why an expensive listing might be rejected.
+
+Need more help? Reach out to the OutlawMC team with the exact command you attempted, the server version, and any console errors.

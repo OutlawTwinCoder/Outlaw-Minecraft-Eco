@@ -1,143 +1,72 @@
 # Outlaw Economy
 
-Plugin Paper/Spigot pour offrir un système d'économie centralisé avec boutiques NPC et échanges sécurisés entre joueurs.
+Outlaw Economy is a Paper/Spigot plugin that powers a centralized server economy with NPC shops, a shared general marketplace, and a secure player-to-player trading system.
 
-## Fonctionnalités
-- Système d'argent persistant avec solde de départ configurable.
-- Commandes `/balance`, `/pay`, `/trade`, `/shop`.
-- Boutiques NPC pour vendre et acheter des items (outils, blocs, nourriture).
-- Magasin général commun où les joueurs peuvent vendre leurs objets, 30 annonces par page et paiement direct au vendeur.
-- Échanges joueur à joueur avec interface dédiée permettant d'offrir items et argent.
-- API publique pour que vos autres plugins (Clans, territoires, etc.) puissent manipuler l'argent.
+## Requirements
+- Java 17 or newer
+- PaperMC/Spigot 1.20.4
+- (Optional) Vault for compatibility with other economy-aware plugins
+
+## Building
+```bash
+mvn -q -DskipTests package
+```
+The plugin JAR will be generated at `target/outlaw-economy-1.0.0-SNAPSHOT.jar`.
 
 ## Installation
-1. Compiler le plugin : `mvn package` (Java 17+ requis).
-2. Déposer le fichier `target/outlaw-economy-1.0.0-SNAPSHOT.jar` dans le dossier `plugins` de votre serveur Paper/Spigot 1.20.4.
-3. Démarrer le serveur afin de générer les fichiers de configuration (`config.yml`, `balances.yml`, `shops.yml`).
+1. Place the compiled JAR inside your server's `plugins/` folder.
+2. Start the server to generate `config.yml`, `balances.yml`, and `shops.yml` under `plugins/OutlawEconomy/`.
+3. Stop the server and adjust the configuration if needed, then restart.
 
-## Commandes
-
-### Sans permission (tous les joueurs)
-| Commande | Description |
-| --- | --- |
-| `/balance` | Affiche le solde du joueur. |
-| `/pay <joueur> <montant>` | Transfert d'argent entre joueurs. |
-| `/trade <joueur>` | Envoie une demande d'échange. Sous-commandes : `accept`, `deny`, `cancel`. |
-
-### Joueurs avec la permission `outlaweco.use`
-| Commande | Description |
-| --- | --- |
-| Interactions PNJ | Les joueurs peuvent utiliser les PNJ de boutique pour ouvrir les menus d'achat/vente. |
-
-### Joueurs autorisés à exécuter `/shop open` (`outlaweco.command.shopopen`)
-| Commande | Description |
-| --- | --- |
-| `/shop open <template>` | Ouvre une boutique PNJ à partir d'un template configuré. |
-| `/shop open general` | Ouvre le magasin général commun (alias : `/shop open shop general`). |
-
-### Administrateurs (`outlawecoadmin`)
-| Commande | Description |
-| --- | --- |
-| `/shop create <template ou general>` | Crée une boutique PNJ ou place le NPC du magasin général. |
-| `/shop remove` | Supprime la boutique ciblée. |
-| `/shop list [templates]` | Liste les boutiques créées ou les templates disponibles. |
-| `/shop add itemshop <template> <item> <quantité> <prixAchat> [prixVente]` | Ajoute un objet à un template simple. |
-| `/shop removeitem <template> <item>` | Retire un objet d'un template simple. |
-| `/shop reloadtemplates` | Recharge les templates depuis le fichier YAML. |
-| `/shop setting price` | Ouvre le menu de définition des prix pour les items et met à jour `shop-templates.yml`. |
-| `/shop setting overallprice <template> [buy|sell] <multiplicateur|reset>` | Ajuste les multiplicateurs d'achat et/ou de vente pour tous les objets d'une boutique. |
-
-## Configuration (`config.yml`)
+## Configuration Overview
+`plugins/OutlawEconomy/config.yml`
 ```yaml
 economy:
-  starting-balance: 100.0   # argent initial pour les nouveaux joueurs
+  starting-balance: 100.0   # Initial money for first-time players
   currency-name: "$"
 trade:
-  request-timeout: 30       # durée (secondes) des demandes d'échange
+  request-timeout: 30       # Seconds before an unanswered trade request expires
 ```
+Additional data files:
+- `balances.yml` stores player balances.
+- `shops.yml` stores NPC shop placements and templates.
 
-## API d'économie pour vos plugins
-Deux approches sont possibles pour interagir avec l'économie depuis un autre plugin.
+## Commands
+| Command | Description | Permission |
+| --- | --- | --- |
+| `/balance` | Show your own balance. | *(everyone)* |
+| `/balance <player>` | View another player's balance. | `outlawecoadmin` |
+| `/balance all` | List every stored balance. | `outlawecoadmin` |
+| `/pay <player> <amount>` | Send money to another player. | *(everyone)* |
+| `/givemoney <player> <amount>` | Add money to a player's balance. | `outlawecoadmin` |
+| `/removemoney <player> <amount>` | Remove money from a player's balance. | `outlawecoadmin` |
+| `/trade <player>` | Request a secure trade with another player. | *(everyone)* |
+| `/trade accept|deny|cancel` | Respond to the latest trade request or cancel an active trade. | *(everyone)* |
+| `/shop open <template>` | Open an NPC shop template menu. | `outlaweco.command.shopopen` |
+| `/shop open general` | Open the shared general marketplace. | `outlaweco.command.shopopen` |
+| `/shop create <template|general>` | Create an NPC shop or place the general market NPC. | `outlawecoadmin` |
+| `/shop remove` | Remove the targeted NPC shop. | `outlawecoadmin` |
+| `/shop list [templates]` | List placed shops or available templates. | `outlawecoadmin` |
+| `/shop add itemshop <template> <item> <quantity> <buyPrice> [sellPrice]` | Add an item entry to a simple template. | `outlawecoadmin` |
+| `/shop removeitem <template> <item>` | Remove an item entry from a simple template. | `outlawecoadmin` |
+| `/shop reloadtemplates` | Reload shop templates from disk. | `outlawecoadmin` |
+| `/shop setting price` | Open the price configuration menu for shop items. | `outlawecoadmin` |
+| `/shop setting overallprice <template> [buy|sell] <multiplier|reset>` | Adjust buy/sell multipliers across a template. | `outlawecoadmin` |
 
-### 1. Utiliser l'API statique
-```java
-import com.outlaw.economy.api.EconomyAPI;
+## Permissions
+| Permission | Purpose | Default |
+| --- | --- | --- |
+| `outlaweco.use` | Allow players to open shop menus triggered by NPCs or commands. | `false` |
+| `outlaweco.command.shopopen` | Allow direct usage of `/shop open` from chat. | `false` |
+| `outlawecoadmin` | Grant full administrative access to economy and shop management features. | `op` |
 
-UUID joueur = ...;
-EconomyAPI.deposit(joueur, 250.0, "Récompense de quête");          // ajoute 250 $
-boolean ok = EconomyAPI.withdraw(joueur, 50.0, "Achat boutique"); // retire 50 (false si solde insuffisant)
-double balance = EconomyAPI.getBalance(joueur);
-```
+## API Usage
+Outlaw Economy exposes a static API and a Vault bridge:
+- `EconomyAPI` for direct calls within other plugins.
+- `EconomyService` via Bukkit's `ServicesManager`.
+- Vault `Economy` service automatically registered when Vault is present.
 
-### 2. Via le ServicesManager de Bukkit
-```java
-import com.outlaw.economy.api.EconomyService;
-import org.bukkit.Bukkit;
+Ensure your dependent plugins declare `depend` or `softdepend` on `OutlawEconomy` (and `Vault` if needed).
 
-EconomyService economy = Bukkit.getServicesManager().load(EconomyService.class);
-if (economy != null) {
-    UUID joueur = ...;
-    if (economy.withdraw(joueur, 500.0, "Achat territoire")) {
-        // ... effectuer l'achat d'un territoire, etc.
-    }
-}
-```
-
-L'interface `EconomyService` expose les méthodes suivantes :
-- `double getBalance(UUID joueur)`
-- `boolean deposit(UUID joueur, double montant, String raison)`
-- `boolean withdraw(UUID joueur, double montant, String raison)`
-- `String format(double montant)`
-- `String currencyCode()`
-
-Assurez-vous que votre plugin déclare une dépendance vers OutlawEconomy (via `plugin.yml` ou `softdepend`) pour être chargé après celui-ci.
-
-### 3. Compatibilité Vault
-
-OutlawEconomy enregistre automatiquement un pont `net.milkbowl.vault.economy.Economy`. Tant que Vault est installé, tous les plugins compatibles Vault verront OutlawEconomy comme fournisseur d'économie.
-
-Dans votre `pom.xml`, ajoutez la dépendance Vault (scope `provided`) et le dépôt JitPack :
-
-```xml
-<repository>
-    <id>jitpack.io</id>
-    <url>https://jitpack.io</url>
-</repository>
-
-<dependency>
-    <groupId>com.github.MilkBowl</groupId>
-    <artifactId>VaultAPI</artifactId>
-    <version>1.7.1</version>
-    <scope>provided</scope>
-</dependency>
-```
-
-Déclarez également `softdepend: [Vault]` dans votre `plugin.yml` pour attendre le chargement de Vault.
-
-## Utilisation avec des PNJ (FancyNPC)
-
-- Attribuez la permission `outlaweco.use` aux joueurs pour qu'ils puissent interagir avec les PNJ de boutique.
-- Ne donnez pas la permission `outlaweco.command.shopopen` si vous souhaitez empêcher l'utilisation manuelle de `/shop open` dans le chat.
-- Configurez votre PNJ FancyNPC pour exécuter la commande en console : `/shop open <joueur> <template|general>` (par exemple `shop open %player% color`).
-- Le plugin vérifie toujours que le joueur ciblé possède `outlaweco.use`, ce qui garantit que seul le public autorisé peut ouvrir les menus.
-
-## Création de boutiques NPC
-- Les boutiques sont basées sur des villageois invulnérables.
-- Effectuez `/shop create <type>` à l'endroit souhaité pour placer le NPC (`general` pour le magasin commun).
-- Les joueurs interagissent avec le NPC pour ouvrir le menu d'achat/vente. Clic gauche = achat, clic droit = vente.
-- Les boutiques sont sauvegardées dans `plugins/OutlawEconomy/shops.yml`.
-
-## Système d'échange
-- `/trade <joueur>` envoie une demande, qui expire après la durée définie dans la config.
-- Lorsque l'échange est accepté, une interface s'ouvre avec deux colonnes : chaque joueur dépose ses items.
-- Les boutons en bas permettent de proposer de l'argent (+1, +10, +100) et de confirmer l'échange.
-- Si les deux joueurs confirment et possèdent les fonds nécessaires, l'échange est validé.
-
-## Persistance des données
-- `balances.yml` stocke les soldes des joueurs.
-- `shops.yml` enregistre l'emplacement et le type de chaque boutique.
-
-## Développement
-- Langage : Java 17
-- Build : Maven
-- API serveur : Paper 1.20.4
+## Support
+For issues or feature requests, open an issue on the repository or contact the OutlawMC team.
