@@ -21,7 +21,9 @@ import org.bukkit.scoreboard.Team;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -32,11 +34,16 @@ public class EconomyManager implements EconomyService, Listener {
     private static final String SCOREBOARD_OBJECTIVE = "outlaweco";
     private static final String BALANCE_TEAM = "balanceValue";
     private static final String BALANCE_ENTRY = ChatColor.DARK_GREEN.toString();
+    private static final String ADMIN_PERMISSION = "outlawecoadmin";
+    private static final double EARNING_ALERT_THRESHOLD = 20_000d;
+    private static final long EARNING_ALERT_WINDOW_MILLIS = 5 * 60 * 1000;
 
     private final Map<UUID, Double> balances = Collections.synchronizedMap(new HashMap<>());
     private final File balanceFile;
     private final FileConfiguration balanceConfig;
     private final DecimalFormat decimalFormat = new DecimalFormat("#,##0.00");
+    private final Map<UUID, Deque<EarningRecord>> recentEarnings = new HashMap<>();
+    private final Map<UUID, Long> lastEarningAlerts = new HashMap<>();
 
     public EconomyManager(Plugin plugin) {
         this.plugin = plugin;
@@ -123,6 +130,7 @@ public class EconomyManager implements EconomyService, Listener {
         balances.put(playerId, getBalance(playerId) + amount);
         updateBalanceDisplay(playerId);
         logTransaction("deposit", playerId, amount, reason);
+        trackEarnings(playerId, amount);
         return true;
     }
 
@@ -251,5 +259,67 @@ public class EconomyManager implements EconomyService, Listener {
             return;
         }
         plugin.getLogger().fine(() -> String.format("%s %.2f to %s (%s)", type, amount, playerId, reason));
+    }
+
+    private void trackEarnings(UUID playerId, double amount) {
+        if (amount <= 0) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        double total;
+        boolean shouldAlert = false;
+        synchronized (recentEarnings) {
+            Deque<EarningRecord> records = recentEarnings.computeIfAbsent(playerId, id -> new ArrayDeque<>());
+            records.addLast(new EarningRecord(now, amount));
+            while (!records.isEmpty()) {
+                EarningRecord oldest = records.peekFirst();
+                if (oldest == null || now - oldest.timestamp() <= EARNING_ALERT_WINDOW_MILLIS) {
+                    break;
+                }
+                records.removeFirst();
+            }
+            double sum = 0d;
+            for (EarningRecord record : records) {
+                sum += record.amount();
+            }
+            total = sum;
+            if (total >= EARNING_ALERT_THRESHOLD) {
+                long lastAlert = lastEarningAlerts.getOrDefault(playerId, 0L);
+                if (now - lastAlert >= EARNING_ALERT_WINDOW_MILLIS) {
+                    lastEarningAlerts.put(playerId, now);
+                    shouldAlert = true;
+                }
+            }
+        }
+        if (shouldAlert) {
+            final double alertTotal = total;
+            Bukkit.getScheduler().runTask(plugin, () -> sendAdminAlert(playerId, alertTotal));
+        }
+    }
+
+    private void sendAdminAlert(UUID playerId, double total) {
+        String playerName;
+        Player online = Bukkit.getPlayer(playerId);
+        if (online != null) {
+            playerName = online.getName();
+        } else {
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(playerId);
+            playerName = offline.getName() != null ? offline.getName() : playerId.toString();
+        }
+        String formattedAmount = format(total);
+        String currency = currencyCode();
+        String message = ChatColor.RED + "[Alerte Économie] " + ChatColor.YELLOW + "Le joueur "
+                + ChatColor.GOLD + playerName + ChatColor.YELLOW + " a gagné "
+                + ChatColor.GOLD + formattedAmount + " " + currency + ChatColor.YELLOW
+                + " en moins de 5 minutes. " + ChatColor.RED + "TP TO " + ChatColor.GOLD + playerName;
+        for (Player receiver : Bukkit.getOnlinePlayers()) {
+            if (receiver.hasPermission(ADMIN_PERMISSION)) {
+                receiver.sendMessage(message);
+            }
+        }
+        plugin.getLogger().warning(ChatColor.stripColor(message));
+    }
+
+    private record EarningRecord(long timestamp, double amount) {
     }
 }
