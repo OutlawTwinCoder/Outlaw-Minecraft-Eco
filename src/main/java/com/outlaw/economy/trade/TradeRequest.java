@@ -1,4 +1,4 @@
-package com.outlaweco.trade;
+package com.outlaw.economy.trade;
 
 import java.time.Instant;
 import java.util.UUID;

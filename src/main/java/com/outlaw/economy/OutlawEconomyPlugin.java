@@ -1,24 +1,28 @@
-package com.outlaweco;
+package com.outlaw.economy;
 
-import com.outlaweco.api.EconomyAPI;
-import com.outlaweco.api.EconomyService;
-import com.outlaweco.economy.EconomyManager;
-import com.outlaweco.economy.command.BalanceCommand;
-import com.outlaweco.economy.command.MoneyAdminCommand;
-import com.outlaweco.shop.ShopManager;
-import com.outlaweco.trade.TradeManager;
+import com.outlaw.economy.api.EconomyAPI;
+import com.outlaw.economy.api.EconomyService;
+import com.outlaw.economy.command.BalanceCommand;
+import com.outlaw.economy.command.MoneyAdminCommand;
+import com.outlaw.economy.command.PayCommand;
+import com.outlaw.economy.core.EconomyManager;
+import com.outlaw.economy.integration.VaultEconomyBridge;
+import com.outlaw.economy.shop.ShopManager;
+import com.outlaw.economy.trade.TradeManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import net.milkbowl.vault.economy.Economy;
 
 public class OutlawEconomyPlugin extends JavaPlugin implements Listener {
 
     private EconomyManager economyManager;
     private ShopManager shopManager;
     private TradeManager tradeManager;
+    private VaultEconomyBridge vaultBridge;
 
     public static OutlawEconomyPlugin getInstance() {
         return getPlugin(OutlawEconomyPlugin.class);
@@ -33,6 +37,14 @@ public class OutlawEconomyPlugin extends JavaPlugin implements Listener {
 
         Bukkit.getServicesManager().register(EconomyService.class, economyManager, this, ServicePriority.Normal);
         EconomyAPI.register(economyManager);
+
+        if (Bukkit.getPluginManager().getPlugin("Vault") != null) {
+            this.vaultBridge = new VaultEconomyBridge(this, economyManager);
+            Bukkit.getServicesManager().register(Economy.class, vaultBridge, this, ServicePriority.Normal);
+            getLogger().info("Vault economy bridge registered.");
+        } else {
+            getLogger().warning("Vault plugin not found; Vault integration disabled.");
+        }
 
         Bukkit.getPluginManager().registerEvents(shopManager, this);
         Bukkit.getPluginManager().registerEvents(tradeManager, this);
@@ -57,6 +69,10 @@ public class OutlawEconomyPlugin extends JavaPlugin implements Listener {
         }
         EconomyAPI.unregister();
         Bukkit.getServicesManager().unregister(EconomyService.class, economyManager);
+        if (vaultBridge != null) {
+            Bukkit.getServicesManager().unregister(Economy.class, vaultBridge);
+            vaultBridge = null;
+        }
     }
 
     private void registerCommands() {
@@ -69,7 +85,7 @@ public class OutlawEconomyPlugin extends JavaPlugin implements Listener {
 
         PluginCommand payCommand = getCommand("pay");
         if (payCommand != null) {
-            com.outlaweco.economy.command.PayCommand executor = new com.outlaweco.economy.command.PayCommand(economyManager);
+            PayCommand executor = new PayCommand(economyManager);
             payCommand.setExecutor(executor);
             payCommand.setTabCompleter(executor);
         }

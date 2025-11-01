@@ -1,6 +1,7 @@
-package com.outlaweco.economy;
+package com.outlaw.economy.core;
 
-import com.outlaweco.api.EconomyService;
+import com.outlaw.economy.api.EconomyService;
+import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -11,7 +12,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
-import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -106,30 +106,34 @@ public class EconomyManager implements EconomyService, Listener {
         return balances.getOrDefault(playerId, 0d);
     }
 
-    @Override
     public double getBalance(OfflinePlayer player) {
         return getBalance(player.getUniqueId());
     }
 
-    @Override
     public void setBalance(UUID playerId, double amount) {
         balances.put(playerId, Math.max(0, amount));
         updateBalanceDisplay(playerId);
     }
 
     @Override
-    public void deposit(UUID playerId, double amount) {
+    public boolean deposit(UUID playerId, double amount, String reason) {
         if (amount <= 0) {
-            return;
+            return false;
         }
         balances.put(playerId, getBalance(playerId) + amount);
         updateBalanceDisplay(playerId);
+        logTransaction("deposit", playerId, amount, reason);
+        return true;
+    }
+
+    public boolean deposit(UUID playerId, double amount) {
+        return deposit(playerId, amount, "");
     }
 
     @Override
-    public boolean withdraw(UUID playerId, double amount) {
+    public boolean withdraw(UUID playerId, double amount, String reason) {
         if (amount <= 0) {
-            return true;
+            return false;
         }
         double balance = getBalance(playerId);
         if (balance < amount) {
@@ -137,12 +141,24 @@ public class EconomyManager implements EconomyService, Listener {
         }
         balances.put(playerId, balance - amount);
         updateBalanceDisplay(playerId);
+        logTransaction("withdraw", playerId, amount, reason);
         return true;
     }
 
-    @Override
+    public boolean withdraw(UUID playerId, double amount) {
+        return withdraw(playerId, amount, "");
+    }
+
     public boolean has(UUID playerId, double amount) {
         return getBalance(playerId) >= amount;
+    }
+
+    public boolean accountExists(UUID playerId) {
+        return balances.containsKey(playerId) || balanceConfig.contains(playerId.toString());
+    }
+
+    public Plugin getPlugin() {
+        return plugin;
     }
 
     public Map<UUID, Double> getAllBalances() {
@@ -151,10 +167,16 @@ public class EconomyManager implements EconomyService, Listener {
         }
     }
 
+    @Override
     public String format(double amount) {
         synchronized (decimalFormat) {
             return decimalFormat.format(amount);
         }
+    }
+
+    @Override
+    public String currencyCode() {
+        return plugin.getConfig().getString("economy.currency-name", "$");
     }
 
     @EventHandler
@@ -213,7 +235,7 @@ public class EconomyManager implements EconomyService, Listener {
                 playerId,
                 id -> plugin.getConfig().getDouble("economy.starting-balance", 0)
         );
-        team.setPrefix(ChatColor.GREEN + decimalFormat.format(balance) + "$");
+        team.setPrefix(ChatColor.GREEN + decimalFormat.format(balance) + " " + currencyCode());
     }
 
     private void applyBlankNumberFormat(Objective objective) {
@@ -222,5 +244,12 @@ public class EconomyManager implements EconomyService, Listener {
         }
 
         objective.numberFormat(NumberFormat.blank());
+    }
+
+    private void logTransaction(String type, UUID playerId, double amount, String reason) {
+        if (reason == null || reason.isBlank()) {
+            return;
+        }
+        plugin.getLogger().fine(() -> String.format("%s %.2f to %s (%s)", type, amount, playerId, reason));
     }
 }

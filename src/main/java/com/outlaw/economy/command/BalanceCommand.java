@@ -1,6 +1,6 @@
-package com.outlaweco.economy.command;
+package com.outlaw.economy.command;
 
-import com.outlaweco.economy.EconomyManager;
+import com.outlaw.economy.core.EconomyManager;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -33,7 +33,7 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             double balance = economyManager.getBalance(player.getUniqueId());
-            sender.sendMessage("§aVotre argent: §e" + economyManager.format(balance) + "$");
+            sender.sendMessage("§aVotre argent: §e" + economyManager.format(balance) + " " + economyManager.currencyCode());
             return true;
         }
 
@@ -60,7 +60,7 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
                         return new PlayerBalance(name, entry.getValue());
                     })
                     .sorted(Comparator.comparing(playerBalance -> playerBalance.name.toLowerCase(Locale.ROOT)))
-                    .forEach(playerBalance -> sender.sendMessage("§e" + playerBalance.name + "§7: §a" + economyManager.format(playerBalance.balance) + "$"));
+                    .forEach(playerBalance -> sender.sendMessage("§e" + playerBalance.name + "§7: §a" + economyManager.format(playerBalance.balance) + " " + economyManager.currencyCode()));
             return true;
         }
 
@@ -72,7 +72,7 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
 
         double balance = economyManager.getBalance(target.getUniqueId());
         String targetName = target.getName() != null ? target.getName() : args[0];
-        sender.sendMessage("§e" + targetName + "§7 possède §a" + economyManager.format(balance) + "$§7.");
+        sender.sendMessage("§e" + targetName + "§7 possède §a" + economyManager.format(balance) + " " + economyManager.currencyCode() + "§7.");
         return true;
     }
 

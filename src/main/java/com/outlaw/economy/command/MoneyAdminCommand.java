@@ -1,6 +1,6 @@
-package com.outlaweco.economy.command;
+package com.outlaw.economy.command;
 
-import com.outlaweco.economy.EconomyManager;
+import com.outlaw.economy.core.EconomyManager;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -59,10 +59,10 @@ public class MoneyAdminCommand implements CommandExecutor, TabCompleter {
         Player onlineTarget = target.getPlayer();
 
         if (command.getName().equalsIgnoreCase("givemoney")) {
-            economyManager.deposit(targetId, amount);
-            sender.sendMessage("§aVous avez donné §e" + economyManager.format(amount) + "$ §aà §e" + targetName + "§a.");
+            economyManager.deposit(targetId, amount, "Admin grant by " + sender.getName());
+            sender.sendMessage("§aVous avez donné §e" + economyManager.format(amount) + " " + economyManager.currencyCode() + " §aà §e" + targetName + "§a.");
             if (onlineTarget != null) {
-                onlineTarget.sendMessage("§aVous avez reçu §e" + economyManager.format(amount) + "$ §ade la part d'un administrateur.");
+                onlineTarget.sendMessage("§aVous avez reçu §e" + economyManager.format(amount) + " " + economyManager.currencyCode() + " §ade la part d'un administrateur.");
             }
             return true;
         }
@@ -72,9 +72,9 @@ public class MoneyAdminCommand implements CommandExecutor, TabCompleter {
         economyManager.setBalance(targetId, newBalance);
         double removed = currentBalance - newBalance;
 
-        sender.sendMessage("§cVous avez retiré §e" + economyManager.format(removed) + "$ §cdu compte de §e" + targetName + "§c.");
+        sender.sendMessage("§cVous avez retiré §e" + economyManager.format(removed) + " " + economyManager.currencyCode() + " §cdu compte de §e" + targetName + "§c.");
         if (onlineTarget != null) {
-            onlineTarget.sendMessage("§cUn administrateur a retiré §e" + economyManager.format(removed) + "$ §cde votre compte.");
+            onlineTarget.sendMessage("§cUn administrateur a retiré §e" + economyManager.format(removed) + " " + economyManager.currencyCode() + " §cde votre compte.");
         }
         return true;
     }

@@ -1,6 +1,6 @@
-package com.outlaweco.trade;
+package com.outlaw.economy.trade;
 
-import com.outlaweco.economy.EconomyManager;
+import com.outlaw.economy.core.EconomyManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -132,10 +132,11 @@ public class TradeSession {
     }
 
     private void refreshMoneyDisplays() {
+        String currency = economyManager.currencyCode();
         inventory.setItem(MONEY_DISPLAY_ONE, createItem(Material.PAPER,
-                Component.text("Offre: " + moneyOffers.get(playerOne), NamedTextColor.YELLOW)));
+                Component.text("Offre: " + economyManager.format(moneyOffers.get(playerOne)) + " " + currency, NamedTextColor.YELLOW)));
         inventory.setItem(MONEY_DISPLAY_TWO, createItem(Material.PAPER,
-                Component.text("Offre: " + moneyOffers.get(playerTwo), NamedTextColor.YELLOW)));
+                Component.text("Offre: " + economyManager.format(moneyOffers.get(playerTwo)) + " " + currency, NamedTextColor.YELLOW)));
     }
 
     public boolean isConfirmSlot(UUID playerId, int slot) {
@@ -167,11 +168,12 @@ public class TradeSession {
     public void sendStatus() {
         Player one = getPlayer(playerOne);
         Player two = getPlayer(playerTwo);
+        String currency = economyManager.currencyCode();
         if (one != null) {
-            one.sendActionBar(Component.text("Offre: " + moneyOffers.get(playerOne) + "$", NamedTextColor.GOLD));
+            one.sendActionBar(Component.text("Offre: " + economyManager.format(moneyOffers.get(playerOne)) + " " + currency, NamedTextColor.GOLD));
         }
         if (two != null) {
-            two.sendActionBar(Component.text("Offre: " + moneyOffers.get(playerTwo) + "$", NamedTextColor.GOLD));
+            two.sendActionBar(Component.text("Offre: " + economyManager.format(moneyOffers.get(playerTwo)) + " " + currency, NamedTextColor.GOLD));
         }
     }
 
@@ -237,22 +239,23 @@ public class TradeSession {
         List<ItemStack> toTwo = collectItems(PLAYER_ONE_SLOTS);
         int offerOne = getMoneyOffer(playerOne);
         int offerTwo = getMoneyOffer(playerTwo);
-        boolean withdrawnOne = economyManager.withdraw(playerOne, offerOne);
-        boolean withdrawnTwo = economyManager.withdraw(playerTwo, offerTwo);
+        String tradeContext = one.getName() + " <-> " + two.getName();
+        boolean withdrawnOne = economyManager.withdraw(playerOne, offerOne, "Trade with " + two.getName());
+        boolean withdrawnTwo = economyManager.withdraw(playerTwo, offerTwo, "Trade with " + one.getName());
         if (!withdrawnOne || !withdrawnTwo) {
             if (withdrawnOne) {
-                economyManager.deposit(playerOne, offerOne);
+                economyManager.deposit(playerOne, offerOne, "Trade refund " + tradeContext);
             }
             if (withdrawnTwo) {
-                economyManager.deposit(playerTwo, offerTwo);
+                economyManager.deposit(playerTwo, offerTwo, "Trade refund " + tradeContext);
             }
             one.sendMessage("§cErreur lors du paiement.");
             two.sendMessage("§cErreur lors du paiement.");
             resetConfirmations();
             return false;
         }
-        economyManager.deposit(playerTwo, offerOne);
-        economyManager.deposit(playerOne, offerTwo);
+        economyManager.deposit(playerTwo, offerOne, "Trade payment from " + one.getName());
+        economyManager.deposit(playerOne, offerTwo, "Trade payment from " + two.getName());
         giveItems(one, toOne);
         giveItems(two, toTwo);
         one.sendMessage("§aEchange réussi !");
