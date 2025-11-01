@@ -1341,7 +1341,7 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
                 return;
             }
             if (slot == 49) {
-                handleStartListing(player, holder.getPage());
+                handleStartListing(player, holder.getPage(), event);
                 return;
             }
             if (slot >= holder.getGeneralListings().size()) {
@@ -1411,18 +1411,18 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
         inventory.setContents(contents);
     }
 
-    private void handleStartListing(Player player, int page) {
-        ItemStack inHand = player.getInventory().getItemInMainHand();
-        if (inHand == null || inHand.getType() == Material.AIR) {
-            player.sendMessage("§cTenez l'objet à vendre dans votre main.");
+    private void handleStartListing(Player player, int page, InventoryClickEvent event) {
+        ItemStack cursor = event.getCursor();
+        if (cursor == null || cursor.getType() == Material.AIR) {
+            player.sendMessage("§cGlissez l'objet à vendre sur le bouton de vente.");
             return;
         }
         PendingListingInput existing = pendingListingInputs.remove(player.getUniqueId());
         if (existing != null) {
             giveItemBack(player, existing.item());
         }
-        ItemStack item = inHand.clone();
-        player.getInventory().setItemInMainHand(null);
+        ItemStack item = cursor.clone();
+        event.getView().setCursor(null);
         player.updateInventory();
         pendingListingInputs.put(player.getUniqueId(), new PendingListingInput(item, page));
         player.closeInventory();
