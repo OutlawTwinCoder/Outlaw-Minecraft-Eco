@@ -1587,11 +1587,16 @@ public class ShopManager implements CommandExecutor, TabCompleter, Listener {
             return;
         }
         if (value > GENERAL_MAX_LISTING_PRICE) {
-            Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage(String.format(
-                    "§cLe prix maximum pour le magasin général est de §e%s %s§c.",
-                    formatPrice(GENERAL_MAX_LISTING_PRICE),
-                    economyManager.currencyCode()
-            )));
+            pendingListingInputs.remove(uuid);
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                giveItemBack(player, pending.item());
+                player.sendMessage(String.format(
+                        "§cLe prix maximum pour le magasin général est de §e%s %s§c. L'objet vous a été rendu.",
+                        formatPrice(GENERAL_MAX_LISTING_PRICE),
+                        economyManager.currencyCode()
+                ));
+                openGeneralStore(player, normalizeGeneralPage(pending.page()));
+            });
             return;
         }
         PendingListingInput removed = pendingListingInputs.remove(uuid);
